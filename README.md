@@ -1,121 +1,79 @@
 # NodeVelo
 
-**A personal cycling coach that learns from how you actually train.** NodeVelo sits on top of
-[Intervals.icu](https://intervals.icu): it pulls your physiology and ride history, scores every
-session against what was prescribed, learns your strengths and weak points, and deterministically
-compiles the next structured training block — then writes it back to your Intervals.icu calendar.
+**A personal cycling training companion built around how you actually ride.**
 
-Intervals.icu stays the **system of record** for day-to-day training. NodeVelo is the **thinking
-layer on top**: it decides *what to do next* and explains *how you executed* — the judgement a
-coach adds that a data platform doesn't.
+NodeVelo turns your [Intervals.icu](https://intervals.icu) history, training goals, and available
+time into daily guidance and structured training blocks. Review the plan, publish it to your
+Intervals.icu calendar, ride, and use the execution evidence to inform the next block.
 
-> **Lost? Open [docs/COMPASS.md](docs/COMPASS.md).** It's the single navigation hub — a task
-> router ("I need to…" → the one place to go), the mental model, and every doc one click away.
-> This README is the landing page; the Compass is the map.
+Built for one athlete running it locally. The project is in active personal use under a
+**feature freeze focused on reliability and real-world validation**. Coaching effectiveness and
+nutrition accuracy are still being evaluated; a passing test suite does not establish either.
 
-## The core idea
+## What makes it different
 
-Five design decisions define the whole app — everything else follows from them:
+- **Training decisions you can inspect.** TypeScript owns scoring, readiness, nutrition,
+  focus selection, workout composition, and publication checks. Claude adds optional ride notes
+  and retrospective language; it does not generate the training plan.
+- **History with provenance.** Past execution scores retain the physiology and scoring context
+  used at the time. Athlete-stated intent is evaluated separately, so a self-directed ride need
+  not be judged as a failed prescribed session. Missing evidence stays unscored.
+- **A continuing training loop.** Daily guidance, block planning, execution review, and the
+  athlete model share data. Goals belong to the athlete; physiology comes from Intervals.icu.
+- **Data you can own.** JSON and Markdown on your machine, with export/restore support.
+  Intervals.icu remains the training-data source and calendar destination.
 
-1. **A layer, not a replacement.** NodeVelo never re-skins Intervals.icu's charts. It adds the
-   coaching judgement on top — analysis, learning, generation — and defers to Intervals.icu as the
-   source of truth for physiology.
-2. **Deterministic coaching core, optional language shell.** Scoring, zones, load, nutrition,
-   readiness, and block compilation are plain, unit-tested TypeScript. Claude is retained only for
-   optional ride-note and retrospective language. **AI owns no training decision or physiological
-   limit**, so it cannot hallucinate your FTP, invent a calorie target, or alter a workout protocol.
-3. **Two kinds of memory, treated oppositely.** *Owned intent* (goals, weak points, notes — what
-   only you know) is hand-written and never recomputed. *Synced physiology* (FTP, zones, weight,
-   fitness — what Intervals.icu measures) is a one-way pull and never hand-edited. Conflating the
-   two is the classic coaching-app bug; here the split is enforced structurally.
-4. **An immutable execution ledger.** Every ride is scored once, against the FTP that was live that
-   day, then frozen. The coach learns from this append-only history (recency-weighted), so trends
-   reflect *real adaptation* — not a moving FTP denominator quietly rewriting the past.
-5. **Local-first, single-user.** Persistence is plain JSON (`data/`) and markdown
-   (`knowledge-base/`) on your machine — the filesystem *is* the database. No accounts, no cloud DB,
-   no multi-tenant surface. A deliberate constraint, not a missing feature.
+## In the app
 
-The full rationale behind these (and five more standing decisions) lives in
-[docs/DECISIONS.md](docs/DECISIONS.md).
-
-## How it works — one loop
-
-**Rides sync in → every ride is scored into an immutable ledger → the ledger teaches a per-athlete model → the season engine picks the next focus → TypeScript compiles the block's schedule and canonical workouts → you accept → calendar events land on Intervals.icu → repeat.** The canonical diagram of this loop lives at the top of [docs/COMPASS.md](docs/COMPASS.md#the-mental-model-60-seconds).
-
-Each stage is one numbered doc in [docs/systems/](docs/systems/) — read them in order
-(`01-sync-and-data` → `06-generation`, plus cross-cutting `07-ai-layer` and `08-frontend`) and you
-have the whole architecture. Every doc opens with *why the system exists* before *how it works*.
-
-## The repository in seven lines
-
-| | |
+| Surface | What you use it for |
 |---|---|
-| `lib/` | The brain: 83 flat engine modules, every number computed here, tests colocated |
-| `app/` | 7 thin pages + 22 API routes (IO shells over `lib/`) |
-| `components/` | The UI (design system: [DESIGN.md](DESIGN.md), governed by [UX-CONSTITUTION.md](UX-CONSTITUTION.md)) |
-| `data/` | The database — JSON files, gitignored, atomic writes + backups |
-| `knowledge-base/` | Your coaching corpus (gitignored; committed skeleton in `knowledge-base-defaults/`) |
-| `docs/` | The knowledge system — start at [COMPASS.md](docs/COMPASS.md) |
-| `proxy.ts` | Next 16 middleware: CSRF guard on every `/api/*` route |
+| **Today** | Readiness, the planned session or no-block suggestion, ride debrief, and fueling targets |
+| **Plan** | Season goals and events; preview, publish, move, swap, and close training blocks |
+| **Trends & Model** | Execution trends, training signals, learned values, and their evidence |
+| **Profile, Settings & Knowledge** | Athlete intent, training constraints, backups, AI usage, and editable reference notes |
 
-Each of the four code/data folders has its own `README.md` stating what it is and the rules that apply inside it.
+[Capabilities and current limits](FEATURES.md) · [Architecture and code navigation](docs/COMPASS.md) · [Development priorities](ROADMAP.md)
 
-## Setup
+## Run locally
+
+Use Node.js 22 LTS and npm. You need an Intervals.icu account and API credentials.
 
 ```bash
-cp .env.local.example .env.local   # fill in the three keys below
-npm install
-npm run dev                        # http://localhost:3000  (redirects to /today)
+git clone https://github.com/Xon333/Nodevelo.git
+cd Nodevelo
+npm ci
+cp .env.local.example .env.local
+# Fill in your credentials, then:
+npm run dev
 ```
 
-| Variable | Source |
+Open [localhost:3000](http://localhost:3000). Configure your profile and training availability,
+then sync Intervals.icu before generating a block.
+
+| Variable | Purpose |
 |---|---|
-| `INTERVALS_API_KEY` | Intervals.icu → Settings → Developer |
-| `INTERVALS_ATHLETE_ID` | Your athlete id, format `i12345` (visible in Intervals.icu URLs) |
-| `ANTHROPIC_API_KEY` | console.anthropic.com → API keys |
+| `INTERVALS_API_KEY` | Intervals.icu API key from Settings → Developer |
+| `INTERVALS_ATHLETE_ID` | Athlete ID, such as `i12345` |
+| `ANTHROPIC_API_KEY` | Optional language features; see the current limitation below |
+| `NODEVELO_BACKUP_DIR` | Optional automatic snapshot destination; see [.env.local.example](.env.local.example) |
 
-> **Local-first by design.** The filesystem is the database — this will **not** run on an
-> ephemeral serverless filesystem (e.g. Vercel). Run it locally.
+**Current limitation:** block generation and deterministic closeout work without Anthropic, but
+part of Today ride finalization is still incorrectly gated on its configuration. This is tracked
+as **SR-2** in [the defect list](todo.md); the complete daily loop is not yet provider-independent.
 
-> **Bound to localhost — there is no auth.** Optional language routes spend Anthropic credits
-> (`/api/analyze`, `/api/retrospective`) and
-> can overwrite your data (`/api/import`) or your Intervals.icu calendar (`/api/write`); on an open
-> network any device could drive them with `curl`. `npm run dev:lan` opts into LAN access — only on
-> a network you trust.
+## Data and deployment
 
-> **Stack note.** Next.js 16 (App Router) / React 19 / TypeScript / Tailwind v4 — conventions
-> differ from older Next.js. See [AGENTS.md](AGENTS.md) and the bundled guides in
-> `node_modules/next/dist/docs/` before changing routing or server/client boundaries.
+Runtime state lives in gitignored `data/` and `knowledge-base/`; committed defaults support a fresh
+clone. Optional language requests send ride or block context to Anthropic and incur API costs.
+Sync contacts Intervals.icu; publishing and calendar changes write back there. See
+[the AI boundary](docs/systems/07-ai-layer.md) for the call inventory.
 
-## Data & privacy
+The server binds to localhost and has no authentication. Run it on a machine with persistent disk;
+public hosting and ephemeral serverless storage are outside the supported setup.
 
-- **Stored locally.** Scores, plans, notes, settings, and the knowledge base live as JSON and
-  markdown files on this machine. There is no cloud database; backups are exported files.
-- **Processed remotely by Anthropic.** The three remote call categories are the ride-analysis coach
-  note, prose retrospectives, and structured retrospectives. Per-call spend is tracked under AI usage
-  & cost. Intent parsing and block generation are deterministic and do not contact Anthropic.
-- **Everything else.** Scoring, nutrition, readiness, scheduling, and backup run without Anthropic.
-  Intervals.icu is a one-way pull and the system of record; accepted plans mirror to its calendar.
+## Develop
 
-## Development
-
-```bash
-npm run check     # tsc + lint + vitest — the verification loop
-```
-
-Full command table (dev servers, reset, skills): [WORKFLOW.md](WORKFLOW.md).
-
-Making a change? [docs/RECIPES.md](docs/RECIPES.md) has the exact steps per change type.
-Touching persistence, prompts, dates, or the ledger? Scan
-[docs/INVARIANTS.md](docs/INVARIANTS.md) first.
-
-## Where to next
-
-| You are… | Go to |
-|---|---|
-| New here, want the full picture | [docs/COMPASS.md](docs/COMPASS.md) → the numbered [docs/systems/](docs/systems/) in order (~30 min) |
-| Here to change something | [docs/COMPASS.md](docs/COMPASS.md) "I need to…" table |
-| Running it day-to-day | [WORKFLOW.md](WORKFLOW.md) — commands, skills, runbooks |
-| An AI coding agent | [AGENTS.md](AGENTS.md), then [docs/COMPASS.md](docs/COMPASS.md) |
-
-Capabilities live in [FEATURES.md](FEATURES.md), the forward backlog in [ROADMAP.md](ROADMAP.md), shipped history in [ARCHIVE.md](ARCHIVE.md), live bugs in [todo.md](todo.md).
+Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4, and Vitest.
+Start with [the Compass](docs/COMPASS.md), select the relevant subsystem, and follow
+[WORKFLOW.md](WORKFLOW.md) for an isolated task and required checks. Agents read [AGENTS.md](AGENTS.md).
+The [roadmap](ROADMAP.md) owns work order; historical reviews are evidence, not additional queues.

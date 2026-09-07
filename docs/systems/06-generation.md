@@ -11,7 +11,7 @@ Generation remains a proposal; nothing reaches Intervals.icu until the athlete a
 - `POST /api/generate` resolves facts, calls the pure compiler, returns `GeneratedPlan`, and persists only the best-effort CAS-guarded season re-plan plus the latest publication verdict.
 - `POST /api/write` matches the submitted plan to that persisted verdict, refuses blockers and unknown/tampered plans, requires explicit acknowledgement for preferences, then writes idempotent `nodevelo-<date>` events and local block state.
 
-All refusal paths precede calendar mutation. See [ADR-0015](../DECISIONS.md#adr-0015--the-publication-gate-persists-the-verdict-at-generation-time-and-write-matches-it).
+Publication-gate refusals precede calendar mutation. Later IO or CAS failures follow separate rollback paths; concurrent rollback ownership is the reported SR-1 defect in [todo](../../todo.md). See [ADR-0015](../DECISIONS.md#adr-0015--the-publication-gate-persists-the-verdict-at-generation-time-and-write-matches-it).
 
 ## Pipeline walkthrough (`app/api/generate/route.ts`)
 

@@ -1,14 +1,14 @@
 # Cycling Database — reference knowledge · SKELETON
 
 > Committed skeleton, **not** real content. Overridden by `/knowledge-base/cycling_database.md`
-> (local, gitignored). Fill with the reference science the generator should ground decisions in.
+> (local, gitignored). Fill with reference science for your own reading. The compiler does not read these notes.
 
 ## Power zones
 _(stub — the %FTP zone model the physiology store resolves to watts; Z1 recovery … Z7 neuromuscular.)_
 
 ## Workout-type protocols
 _(stub — Z4 threshold 88–105% FTP; sweet-spot 88–93%; Z5 VO2max 106–120% FTP, 3–8 min efforts; SIT
-all-out. **Cited by the generator's protocol validation.**)_
+all-out. Execution bands live in the typed catalogue and validator, not this file.)_
 
 ## Periodization & block structure
 _(stub — loading vs recovery weeks; the weekly quality-session budget; polarized (80/20) vs

@@ -1,6 +1,6 @@
 # Segment-aware self-directed intent scoring — Design
 
-**Status:** Approved for implementation planning 2026-08-19; not yet implemented.
+**Status:** Partially shipped (NV-15/16, August 19–23). Segment-local scoring and deterministic labelled parsing are implemented; adjacent-zone partial credit and middle-half precision remain deferred. See [shipment evidence](../../history/shipments.md#named-segment-intent-scoring-2026-08-19--2026-08-23) and [ROADMAP](../../../ROADMAP.md).
 
 ## Purpose
 

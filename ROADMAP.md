@@ -13,7 +13,7 @@ and [decision log](docs/DECISIONS.md) still govern product scope.
 |---:|---|---|
 | **1 — NOW** | **SR-1: verify and resolve concurrent publication rollback.** Two writers may receive the same remote event IDs; a CAS loser then deletes them. | A deterministic two-writer reproduction either disproves the report with recorded evidence, or a separately reviewed fix preserves the winner's events/history and passes required checks. |
 | 2 | **SR-2: verify and restore provider-independent ride finalization.** Deterministic Today processing is still inside `isAnthropicConfigured()`. | A supported ride sync without an Anthropic key produces deterministic Today evidence and ledger enrichment; only optional prose depends on AI. |
-| 3 | **Close the local workflow/document cleanup.** Finish current Codex-only policy in an isolated task; preserve unique untracked material, exclude immutable-plan edits, retain rationale (MA-6/7). | Relevant work is integrated or explicitly preserved/deferred; primary changes are deliberately reconciled before sync/pruning. No blanket stash, reset or deletion. |
+| 3 | **Reconcile remaining primary-checkout residue.** Codex-only helpers and documentation ownership are now aligned. Classify the remaining local comment edits and unique reports; exclude immutable-plan edits and retain rationale (MA-6/7). | Relevant work is integrated or explicitly preserved/deferred; primary changes are deliberately reconciled before sync/pruning. No blanket stash, reset or deletion. |
 | 4 | **Finish the existing FR-6 work in PR #109.** Resolve MA-4/5 and adjudicate other review claims once, then complete the bounded comparison. | One consistent protocol, valid measured costs, owner usefulness review, and keep/switch/retire decisions for each of the three language categories; PR integrated or closed with an explicit disposition. |
 | 5 | **Small reliability backlog, one fix at a time:** MA-3 tracing → SR-3 local date → MA-2/SR-4 request validation → SR-5 backup-test synchronization. | Each finding has a regression/evidence check and is archived on shipment. No combined cleanup PR. |
 | 6 | **FR-7**, then **FR-8**, only when their existing entry gates clear. | See package exits below. Do not pre-plan either while earlier work is open. |
@@ -44,17 +44,9 @@ those commits. Numerous old worktrees are historical checkout residue, not indep
 
 ## Which records should I follow?
 
-| Record | Role / disposition |
-|---|---|
-| This roadmap | The one ordered work queue. Start here every session. |
-| [todo.md](todo.md) | Defect acceptance, verification and completion details; not a second priority system. |
-| August 20 adversarial review | Accepted freeze/product decisions. Does not require repeating completed phases. |
-| [September 2 code/app review](docs/reviews/2026-09-02-code-and-app-state-review.md) | Dated findings; SR-1–5 and MA-3/8 route its actionable work. Not all recommendations are accepted refactors. |
-| [September 5 maintainer audit](docs/reviews/2026-09-05-maintainer-audit.md) | MA-1 shipped; remaining MA findings are routed here. Its old execution order yields to this reconciliation. |
-| PR #109 spec, plan and experiment record | The existing FR-6 work to finish; do not create a competing provider plan. |
-| Local August 24 AI-cost review | Historical assumptions predate deterministic FR-5; retain as reference, not today's experiment spec. |
-| Local September 3 Intervals synergy research | Parked research. No freeze commitment to add fields, parser features or scoring surfaces. |
-| Old plans, handoffs and completed-task chats | History. A checklist or stale “next” paragraph does not reactivate shipped work. |
+This queue owns priority; [todo](todo.md) owns defect acceptance; [review dispositions](docs/reviews/README.md)
+and [history](docs/history/README.md) route evidence. Local research, old plans, and handoffs do not
+activate work. Product scope remains governed by the accepted charter and decision log.
 
 ## Freeze implementation-plan queue
 
@@ -63,7 +55,7 @@ and existing unfinished work first. A package already in progress is continued, 
 
 ### Phase 2 · Make the core journey excellent
 
-FR-3/FR-4 and selected FR-13 are complete; see [ARCHIVE](ARCHIVE.md#fr-3--fr-4-core-journey-audit-and-selection-2026-09-01).
+FR-3/FR-4 and selected FR-13 are complete; see [ARCHIVE](docs/history/shipments.md#fr-3--fr-4-core-journey-audit-and-selection-2026-09-01).
 Remaining P1 reports are targeted repairs, not a reopening of the entire phase.
 
 ### Phase 3 · Reduce Claude's generation authority

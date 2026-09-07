@@ -1,77 +1,35 @@
 ---
 name: docs-sweep
-description: Use when asked to review, restructure, or clean up the project's documentation (README, ROADMAP, ARCHIVE, todo, FEATURES) for clarity, or when docs have drifted from what's actually shipped.
+description: Reconcile NodeVelo documentation with shipped code and simplify project navigation when documentation is stale, duplicated, or hard to use.
 ---
 
-# Docs Sweep
+# Docs sweep
 
-## Overview
+Read [Compass documentation ownership](../../../docs/COMPASS.md#documentation-ownership) first.
+It owns the document map; this skill owns the reconciliation procedure.
 
-Encodes this repo's documentation conventions so any session — including subagents with no other
-context — applies them the same way.
+1. Establish the evidence base: checkout, dirty files, integrated revision, recent commits, and
+   relevant open PRs. Treat local edits and unmerged PRs as unfinished, not shipped behavior.
+2. Check claims against the owning implementation and tests. Distinguish a pure deterministic
+   engine from route orchestration that may still depend on provider configuration. Distinguish
+   working software from measured training benefit. Verify the actual consumer before claiming
+   that knowledge, reflections, or guidance feed generation.
+3. Update the canonical owner and replace duplicated explanations with links. Keep README focused
+   on purpose, actual capabilities, setup, and material limits. Keep task order in ROADMAP and
+   defect acceptance details in todo. Preserve stable IDs and entry gates.
+4. Move shipped narrative into [shipment history](../../../docs/history/shipments.md), recording
+   a concise outcome and commit/PR. Keep partial work explicit in its tracker. Reviews and specs
+   are dated evidence; verify and stamp their disposition rather than reactivating checklists.
+5. When reorganizing, preserve historical references and rationale. Execution plans under
+   `docs/superpowers/plans/` remain immutable; retain compatibility entry points where needed.
+   Agent instructions and skill routers are in scope when the user requests workflow/navigation
+   changes. Leave personal runtime knowledge and session handoffs alone unless requested.
+6. Verify changed relative links and heading anchors with `npm run check-links`, and check changed
+   skill links separately (the default checker excludes `.agents/`). Search inbound code/doc
+   pointers before moving a target. Inspect the resulting diff for accidental historical rewrites.
+7. Follow AGENTS and WORKFLOW for verification, task-owned staging, and integration. Record concrete
+   remaining work; do not describe an open PR or a successful check as a completed merge.
 
-## Conventions
-
-| File | Rule |
-|---|---|
-| ROADMAP.md | **Forward-only**: open work only. Anything shipped moves out to ARCHIVE.md. Keep stable cross-ref IDs (`#1–4`, `§5–7`, `Track A–C`) — other docs link to these; append new IDs, never renumber. |
-| ARCHIVE.md | Everything shipped, grouped by theme, one-line record plus enough detail to find the commit. |
-| todo.md | Lean live punch-list only. Legend: Status `☐`/`◑`/`☑`, Priority `P1` correctness/data-integrity > `P2` UX/feature > `P3` polish. On ship, move the line to ARCHIVE.md. |
-| README.md | Landing page: what/why, core-idea pillars, setup, routing tables. Deep subsystem content lives in `docs/systems/`, the doc-set listing in `docs/COMPASS.md` §"The full doc set" — keep the Compass listing (not a README table) in sync whenever a doc is added or removed. |
-| CONTINUE.md | Session-handoff only. Don't touch during a docs sweep unless asked — use the `handoff` skill instead. |
-
-## Full-repo sweep scope
-
-("sweep/restructure all the documentation" — broader than the table above.)
-
-**In scope:** README.md, ROADMAP.md, ARCHIVE.md, todo.md, research.md, DESIGN.md, FEATURES.md,
-`docs/specs/*.md`, `docs/superpowers/specs/*.md` (design specs — stamp `Status: Shipped` + a date
-once built; don't leave them saying "Approved design (pre-implementation)" forever),
-`knowledge-base-defaults/*.md` (the committed KB skeleton — real user-facing copy, not just a
-fixture), and the docs system (2026-07-25, consolidated same day): `docs/COMPASS.md` (the single
-navigation hub — keep its task table and doc-set listing current), `docs/systems/01–09-*.md` (the
-numbered pipeline docs), `docs/RECIPES.md`, `docs/FILE_INDEX.md`, `docs/INVARIANTS.md`,
-`docs/GLOSSARY.md`, `docs/DECISIONS.md` (append new ADR sections; existing ones are decision
-records — amend with a dated note, don't rewrite), and the folder READMEs `lib/README.md`,
-`components/README.md`, `app/README.md`. Ownership rules for which doc owns which fact:
-`docs/COMPASS.md` §"Session rituals" closing table + §"The full doc set" — enforce them during a
-sweep (a fact duplicated across docs gets one owner + links, not copies).
-
-**Out of scope:** CONTINUE.md (see table above), CLAUDE.md/AGENTS.md (agent operating instructions
-— a different category from project docs; flag as excluded rather than silently touching or
-silently skipping), `docs/superpowers/plans/*.md` (point-in-time execution records, immutable like
-commits — don't rewrite history).
-
-**Doc drift from concurrent sessions:** this repo integrates isolated task worktrees into main, so a
-feature can ship (with its own commit) while the docs describing it are never updated in the same
-pass — cross-check `git log` against what ROADMAP/ARCHIVE claim is "open" before trusting either.
-
-## Scope and drift
-
-Inspect the documents relevant to the request. In a backlog cleanup, look for shipped items still marked open and historical rationale crowding out actionable work. Size alone is not a reason to launch another sweep or ask for one during an unrelated task.
-
-## Procedure
-
-1. Diff intent vs. reality: check whether ROADMAP.md or todo.md still lists anything that ARCHIVE.md
-   or recent git log shows as already shipped — move it.
-2. Verify every ROADMAP cross-ref ID is still referenced correctly elsewhere (todo.md, README).
-   Never renumber an existing ID; append new ones.
-3. Trim ROADMAP prose that's now historical context rather than forward work — that belongs in
-   ARCHIVE, not ROADMAP. Includes ✅-marked shipped narrative *inside* still-open items: keep only
-   the "Left:" part plus a pointer to ARCHIVE. A paused/rejected investigation keeps a short stub
-   in ROADMAP (decision + revisit trigger); its investigation detail moves to ARCHIVE.
-4. Check WORKFLOW.md's "standing rules" against CLAUDE.md/AGENTS.md — the cheat sheet drifts when
-   the underlying policy changes.
-5. Update Compass's doc-set listing if the maintained doc set changed. One-off point-in-time reports (audits,
-   transcript analyses) live under `docs/`, not the repo root — root is for living docs only.
-6. Commit doc changes separately from code changes when both happened in the same session.
-
-## Common mistakes
-
-- Renumbering existing ROADMAP IDs — breaks cross-references elsewhere that assume stable handles.
-- Leaving a shipped item listed as open because it "still has open sub-parts" — split it: the shipped
-  part moves to ARCHIVE, only the genuinely unstarted remainder stays.
-- Deleting a decision record while trimming — "decided against / paused / removed" entries are
-  forward-relevant (they stop re-proposals) and must survive the trim, even if compressed.
-- Duplicating accepted-no-fix items in both todo.md and ARCHIVE — they live in the relevant ARCHIVE
-  closeout once, and todo goes back to genuinely empty.
+Maintenance signals: a landing page reading like a changelog, a tracker carrying shipped narrative,
+stale counts, a task router naming missing headings, or repeated status in reviews. Correct relevant
+drift in the active task; mention unrelated structural drift without launching an unsolicited audit.

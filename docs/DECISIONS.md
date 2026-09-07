@@ -196,3 +196,20 @@ and FR-6 remains blocked on the FR-5 baseline.
 blockers, or turn the failed run into structural-validity evidence. FR-5 retains its original exit
 evidence, including five consecutive structurally valid varied-input generations. The waiver changes
 work order only; publication safety and downstream evidence gates remain intact.
+
+## ADR-0016 — Documentation follows tasks and authority (2026-09-07)
+
+**Decision:** README owns introduction/setup; FEATURES owns capability boundaries; COMPASS routes
+questions; ROADMAP orders work; todo owns defect acceptance; system docs own behavior; AGENTS owns
+policy and WORKFLOW its procedure. Long shipment, research, and UX rollout records live under
+`docs/history/`; old root paths remain compatibility entry points. Existing plans retain their paths
+and contents. Reviews record evidence, never a competing execution order.
+
+**Why:** stale counts, duplicated status, historical checklists, and obsolete skill headings made
+onboarding and next-task selection unreliable. Keep the existing subsystem seams, use progressive
+lookup, and update the owning document with the implementation. Avoid maintaining a generated-looking
+inventory manually; derive counts/callers from source. Preserve rationales and stable handles.
+
+**Tradeoff:** historical directories remain visible for link compatibility. Their index explicitly
+limits their authority. This improves navigation without mass-renaming immutable records or treating
+unreviewed local edits as integrated work.

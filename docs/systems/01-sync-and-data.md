@@ -25,7 +25,7 @@ Physiology reads also expose `liveCorrupt` when malformed live content was recov
 
 **Rules:** new persisted stores go through json-store, never raw `fs`. New migration flags use **truthy checks, not `=== null`** (pre-existing files parse back as `undefined`). Concurrent mutations of the same store go through `updateJsonFile`, not read-then-write.
 
-## Sync flow (`POST /api/sync`, 905 lines — the orchestrator)
+## Sync flow (`POST /api/sync` — the orchestrator)
 
 ```mermaid
 flowchart TD
@@ -42,11 +42,13 @@ flowchart TD
   LS --> SCORE[score-log.buildRideScores + backfill → score-log.json]
   SCORE --> EX[backfillExecutionOntoDays → current-block + history]
   SCORE --> IV[intervention.validateInterventions → intervention-log.json]
-  LS --> T{ride today?}
+  LS --> T{Ride today and Anthropic configured?}
   T -->|yes| TA[ride-analysis.buildTodayAnalysis → today-analysis.json\nresponse: analysisPending=true]
   TA --> AN[client then POSTs /api/analyze → LLM coach note]
   LS --> BK[backup.snapshotBackup → NODEVELO_BACKUP_DIR, best-effort, keeps 14]
 ```
+
+**Known limitation:** the configuration guard above also gates deterministic finalization (SR-2); sync makes no LLM call, but this part is not yet provider-independent.
 
 Safety properties worth knowing: every Intervals.icu request has a 20s abort timeout; the all-time power curve merges **monotonically** so a partial fetch can't false-report a PR drop; a suspect-empty sync is refused, not written; the LLM step is deferred to `/api/analyze` so sync stays fast and an Anthropic hiccup is isolated ([ADR-0005](../DECISIONS.md)).
 

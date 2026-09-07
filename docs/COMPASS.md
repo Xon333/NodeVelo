@@ -1,96 +1,92 @@
 # Compass
 
-**The one page you open when you don't know where to go.** Pin this tab. Everything else in the repo is reachable in one click from here. Don't read this top to bottom — find your row, click, leave.
+Start here to work on NodeVelo. Read the mental model once, then open only the row relevant to
+your task. [README](../README.md) introduces the product; [ROADMAP](../ROADMAP.md#follow-this-queue)
+selects work; [WORKFLOW](../WORKFLOW.md) explains how to deliver it.
 
 ## The mental model (60 seconds)
 
-NodeVelo is one loop: rides come in, get judged, teach a model of the athlete, and that model shapes the next plan. Deterministic TypeScript compiles training blocks and computes every number; Claude is optional language for ride notes and retrospectives. Intervals.icu owns physiology (one-way pull); the athlete owns intent; JSON files on disk are the database.
+NodeVelo is a local, single-athlete training loop. Intervals.icu supplies measured data; the athlete
+supplies intent. Deterministic engines derive evidence and compile plans. AI adds optional wording.
 
 ```mermaid
 flowchart LR
-  A[1 · Ride data syncs in] --> B[2 · Scored → ledger → athlete model]
-  B --> C[3 · Daily loop: readiness, today's guidance]
-  B --> D[4 · Knowledge: KB + retrospectives]
-  D --> E[5 · Season: pick the next focus]
-  B --> E
-  E --> F[6 · Generation: deterministic schedule,\nprotocol, syntax + publication gate]
-  F --> G[Accept → calendar events on Intervals.icu]
-  G --> A
+  I[Intervals.icu] --> S[Sync and dated physiology]
+  S --> L[Execution ledger and intent overlays]
+  L --> M[Athlete model and signals]
+  A[Athlete goals and constraints] --> F[Focus and block compiler]
+  M --> F
+  M --> T[Today and Trends]
+  F --> G[Preview and publication gate]
+  G -->|Athlete accepts| I
+  L --> H[Block closeout and history]
+  H -. optional wording .-> AI[Anthropic]
+  T -. optional ride note .-> AI
 ```
 
-The numbers are the doc files: [systems/](systems/) is this pipeline in order — `01-sync-and-data` → `02-scoring-and-learning` → `03-daily-loop` → `04-knowledge` → `05-season` → `06-generation`, plus the three cross-cutting layers `07-ai-layer` (optional language paths), `08-frontend` (the surface over everything) and `09-nutrition` (what to eat, fed by the same sync and surfaced on the same pages).
+`lib/` contains engines and persistence adapters; `app/api/` orchestrates IO; pages and
+`components/` present the results. JSON in `data/` is runtime state. Markdown in `knowledge-base/`
+is personal reference/history, not compiler authority. Both runtime directories are gitignored.
 
 ## I need to…
 
-| I need to… | Open | The files |
+| Task | Read | Start in code |
 |---|---|---|
-| **understand** the project from zero | [../README.md](../README.md), then the flow above | — |
-| **rebuild** context after weeks away | Away >2 weeks: re-read the mental model + diagram above (~2 min), then `git log --oneline -20`. Shorter gaps: the Opening ritual below | — |
-| **find** where anything lives / who imports it | [FILE_INDEX.md](FILE_INDEX.md), Ctrl+F | — |
-| **debug / understand** a bad generated block | [07-ai-layer § Debugging](systems/07-ai-layer.md#debugging-a-bad-generation) | `GeneratedPlan.raw`, `warnings[]`, `app/api/generate/route.ts` |
-| **change** AI language prompts | [07-ai-layer](systems/07-ai-layer.md) | `lib/anthropic-prompts.ts` (+ bump `PROMPT_VERSION`) |
-| **change** season logic | [05-season](systems/05-season.md) | `lib/season.ts`, `lib/season-signals.ts` |
-| **modify** block generation | [06-generation](systems/06-generation.md) | `app/api/generate/route.ts`, `lib/block-skeleton.ts`, `lib/block-compiler.ts`, `lib/workout-templates.ts`, `lib/prescription.ts` |
-| **understand** why season picked this focus | [05-season § coverage selector](systems/05-season.md#the-coverage-selector) | `lib/season.ts`, `lib/season-signals.ts` |
-| **add** a workout type | [RECIPES § workout type](RECIPES.md#add-a-workout-type) | `lib/types.ts`, `lib/workout-types.ts`, `lib/workout-validate.ts` |
-| **understand** the athlete model / learning | [02-scoring-and-learning](systems/02-scoring-and-learning.md) | `lib/athlete-model.ts`, `lib/score-log.ts`, `lib/calibration.ts` |
-| **change** scoring | [RECIPES § scoring](RECIPES.md#change-scoring) | `lib/execution-score.ts` (ledger stays frozen!) |
-| **add** a readiness/state signal | [RECIPES § readiness](RECIPES.md#add-a-readinessstate-signal) | `lib/readiness.ts` → `athlete-state.ts` → `coach-snapshot.ts` |
-| **debug** sync / data / a store file | [01-sync-and-data](systems/01-sync-and-data.md) | `app/api/sync/route.ts`, `lib/json-store.ts`, `npm run reset:today` |
-| **debug** an API route | [FILE_INDEX § routes](FILE_INDEX.md#appapi--routes) for the route → its lib modules | `lib/log.ts` output, `lib/client-api.ts` on the client side |
-| **build** or change UI | [08-frontend](systems/08-frontend.md) + [../DESIGN.md](../DESIGN.md) | `components/ui.tsx` primitives first |
-| **add** a page | [RECIPES § page](RECIPES.md#add-a-page) | `app/`, `components/`, `Nav.tsx` |
-| **add** an API route | [RECIPES § API route](RECIPES.md#add-an-api-route) | `app/api/`, logic in `lib/` |
-| **add** a validator | [RECIPES § validator](RECIPES.md#add-or-change-a-validator) | `schedule-validate.ts` / `workout-validate.ts` |
-| **change** what the athlete should eat | [09-nutrition](systems/09-nutrition.md) | `lib/nutrition.ts`, `lib/nutrition-validate.ts` |
-| **understand** why today's target is that number | [09-nutrition § the formula](systems/09-nutrition.md#the-formula) | `lib/nutrition.ts` — `calculateDailyTarget`, `resolveBuffer` |
-| **debug** a wrong NEAT multiplier / calibration | [09-nutrition § calibration](systems/09-nutrition.md#calibration--deriving-k-from-the-athletes-own-data) | `lib/nutrition.ts` — `calibrateNeat`; adopted in `app/api/sync/route.ts` |
-| **add** a calibratable parameter | [RECIPES § calibration](RECIPES.md#add-a-calibratable-parameter) | `lib/calibration.ts`, `lib/correlation.ts` |
-| **change** physiology / zones | [RECIPES § physiology](RECIPES.md#change-physiology--zones) | `lib/physiology.ts`, `lib/zones.ts` |
-| **add** tests | [RECIPES § tests](RECIPES.md#add-tests) | colocated `*.test.ts` |
-| **turn over** a block (end → retro → next) | [RECIPES § block turnover](RECIPES.md#turn-over-a-block-end--retrospective--next-block) | — |
-| **decode** a term or a weird file name | [GLOSSARY.md](GLOSSARY.md), Ctrl+F (naming traps live there too) | — |
-| **know** what I must never break | [INVARIANTS.md](INVARIANTS.md) — scan the numbered contracts | — |
-| **understand** why it's built this way | [DECISIONS.md](DECISIONS.md) — all decision records, one file | — |
-| **know** what the app can do (user-facing) | [../FEATURES.md](../FEATURES.md) | — |
-| **know** what to work on next | [../ROADMAP.md](../ROADMAP.md#follow-this-queue): follow its single ordered queue, one active task; reviews supply evidence, not competing priorities | — |
-| **find** something that already shipped | [../ARCHIVE.md](../ARCHIVE.md) — grep by ID (HR-nn, UXA-nn, P1–P7, SUB-n) | — |
-| **run** / verify / commands | [../WORKFLOW.md](../WORKFLOW.md) cheat sheet | `npm run dev` · `npm run check` · `npm test` |
-| **work with Codex** | [../WORKFLOW.md § Codex workflow](../WORKFLOW.md#codex-workflow) | isolated worktrees · required checks · `npm run finish:agent-task` |
+| Understand sync, storage, backup, or physiology | [01 · Data](systems/01-sync-and-data.md) | `app/api/sync/route.ts`, `lib/json-store.ts`, `lib/physiology.ts` |
+| Change execution scoring, intent, or learning | [02 · Evidence](systems/02-scoring-and-learning.md) | `lib/execution-score.ts`, `lib/intent-scoring.ts`, `lib/athlete-model.ts` |
+| Change Today, readiness, or a morning decision | [03 · Daily loop](systems/03-daily-loop.md) | `components/dashboard/today.tsx`, `lib/athlete-state.ts` |
+| Change reference notes or retrospective records | [04 · Knowledge](systems/04-knowledge.md) | `lib/kb-loader.ts`, `lib/block-closeout.ts` |
+| Understand focus selection or season outlook | [05 · Season](systems/05-season.md) | `lib/season.ts`, `lib/season-signals.ts` |
+| Debug or change a generated block or publication | [06 · Generation](systems/06-generation.md) | `lib/block-compiler.ts`, `lib/publication-gate.ts`, `app/api/write/route.ts` |
+| Change an AI language path | [07 · AI](systems/07-ai-layer.md) | `lib/anthropic-prompts.ts`, `lib/anthropic-api.ts` |
+| Change a page or interaction | [08 · Frontend](systems/08-frontend.md), [DESIGN](../DESIGN.md) | `components/ui.tsx`, relevant page/component |
+| Change nutrition or explain its uncertainty | [09 · Nutrition](systems/09-nutrition.md) | `lib/nutrition.ts` |
+| Follow a change procedure | [Recipes](RECIPES.md) | Then read the relevant implementation and tests |
+| Find a module or route | [File index](FILE_INDEX.md) | `rg --files lib app/api components` for the current inventory |
+| Decode a term / understand a constraint | [Glossary](GLOSSARY.md), [Invariants](INVARIANTS.md) | Read only the relevant contracts |
+| Understand a decision or old review | [Decisions](DECISIONS.md), [History](history/README.md) | Follow a named reference; do not read the archive as onboarding |
+| Choose the next task | [Roadmap](../ROADMAP.md#follow-this-queue) | Verify current git/PR state before advancing it |
 
 ## Session rituals
 
-For task setup and integration, follow [AGENTS.md](../AGENTS.md#parallel-agent-integration). Use this page as a lookup when orientation is needed; routine edits do not require reading the full doc set.
+**Open:** identify your checkout and its changes. Sync clean primary `main`; if dirty, preserve it
+and start from current `origin/main` through the task helper. Read the selected roadmap item (or
+the user's explicit task), its subsystem, and affected invariants. [Workflow](../WORKFLOW.md) owns
+commands and dirty-checkout recovery. [AGENTS](../AGENTS.md) owns operating safeguards.
 
-For subsystem judgment calls, consult the relevant **Known rough edges** section in `01-sync-and-data`, `05-season`, `06-generation`, `07-ai-layer`, `08-frontend`, or `09-nutrition`. High-traffic files also carry `// AI:` pointers to these sections.
+**Close:** verify the result, update the document that owns the changed fact, commit task-owned
+files, and finish through the helper. Record any unfinished scope in its tracker with a concrete
+next action. A local edit, open PR, and merged change are different states.
 
-**Closing — update the ONE doc that owns what you changed:**
+## Documentation ownership
 
-| You changed… | Update |
-|---|---|
-| a user-visible capability | [../FEATURES.md](../FEATURES.md) |
-| open/planned work | [../ROADMAP.md](../ROADMAP.md) (append IDs, never renumber) |
-| something that shipped | move its line to [../ARCHIVE.md](../ARCHIVE.md) |
-| a quick bug note | [../todo.md](../todo.md) |
-| a plan you only partially executed | [../ROADMAP.md](../ROADMAP.md) — state exactly which tasks shipped vs remain; never leave the plan doc in `docs/superpowers/plans/` as the only record (a 1-of-10-tasks shipment went untracked and unwired this way once — 2026-08-04) |
-| how a subsystem works | its `systems/0X-*.md` |
-| a file/route/LLM call site | [FILE_INDEX.md](FILE_INDEX.md) (call sites: [07-ai-layer](systems/07-ai-layer.md#every-llm-call-site)) |
+| Question | Canonical owner | Update when |
+|---|---|---|
+| What is this and how do I try it? | [README](../README.md) | Positioning, setup, or material limitations change |
+| What can I do in the app? | [Features](../FEATURES.md) | A capability or its boundary changes |
+| What should happen next? | [Roadmap](../ROADMAP.md) | Priority, status, or an entry gate changes |
+| What is the defect and its acceptance check? | [todo](../todo.md) | A reported defect is reproduced, fixed, or disproved |
+| How does it work / what can break? | Relevant [system doc](#i-need-to), [Invariants](INVARIANTS.md) | Contracts, data flow, or tradeoffs change |
+| How do we work here? | [AGENTS](../AGENTS.md) (policy), [Workflow](../WORKFLOW.md) (procedure) | Operating behavior changes; update helpers in the same task |
+| Why was a choice made? | [Decisions](DECISIONS.md) | A durable design decision is accepted or superseded |
+| What shipped / what did an investigation find? | [Shipment history](history/shipments.md), [historical evidence](history/README.md) | A task closes; record a short outcome and commit/PR |
 
-Never CONTINUE.md (that's `/handoff`'s), never `docs/superpowers/plans/` (immutable records).
-
-## Critical files & red flags
-
-Repo layout: the seven-line table in [../README.md](../README.md). Folder rules: each folder's own README.
-
-**Widest blast radius** (sizes/importers: [FILE_INDEX.md](FILE_INDEX.md)): `lib/types.ts` · `lib/json-store.ts` + `data-store.ts` · `lib/execution-score.ts` + `score-log.ts` (the frozen ledger) · `lib/season.ts` · `app/api/sync/route.ts` · `lib/anthropic-prompts.ts` · `lib/coach-snapshot.ts`.
-
-**Scan [INVARIANTS.md](INVARIANTS.md) before touching:** the ledger · migration flags · "today" dates · generation contracts · `types.ts` · `data/` shapes.
-
-## For AI agents
-
-Use this page for orientation and [INVARIANTS.md](INVARIANTS.md) for affected hard contracts. Lookups: [FILE_INDEX.md](FILE_INDEX.md) (files), [RECIPES.md](RECIPES.md) (change procedures), [GLOSSARY.md § naming traps](GLOSSARY.md#naming-traps) (e.g. `trace.ts` ≠ LLM tracing). Operating law — concurrency, commit policy, recurring bug classes — is [../AGENTS.md](../AGENTS.md)/[../CLAUDE.md](../CLAUDE.md). Stack is Next.js **16** (check `node_modules/next/dist/docs/`); verify with `npm run check`; a changed AI path needs one live smoke run ([how](systems/07-ai-layer.md#debugging-a-bad-generation)).
+Keep one owner per fact; other documents link to it. Do not cache module counts, line counts, or
+importer counts. A new document needs a distinct question and an inbound link. Historical checklists
+and old handoffs never override current policy or activate work.
 
 ## The full doc set (one question each)
 
-**Root:** README (what/why + setup) · FEATURES (what it does) · ROADMAP (what's next, stable IDs) · ARCHIVE (what shipped) · todo (live bugs) · DESIGN (visual tokens/rules) · UX-CONSTITUTION (UX decision law) · UX-MASTERPLAN (shipped UX redesign record) · WORKFLOW (daily commands/runbooks) · research (spikes, not commitments) · CONTINUE (session handoff, `/handoff` only) · AGENTS/CLAUDE (agent law).
-**docs/:** COMPASS (this) · [systems/01–09](systems/) (the pipeline) · RECIPES (how to make changes) · FILE_INDEX (where everything is) · INVARIANTS (what never breaks) · DECISIONS (why it's built this way) · GLOSSARY (terms + traps) · specs/ (design specs) · [reviews/](reviews/) (point-in-time audits and decision records) · superpowers/ (immutable plans + stamped specs) · folder READMEs (`lib/`, `app/`, `components/`, `knowledge-base-defaults/`) — local rules, read alongside FILE_INDEX.
+The tables above are the live map. Additional references: [UX principles](../UX-CONSTITUTION.md)
+(used with DESIGN), [app rules](../app/README.md), [engine rules](../lib/README.md),
+[component rules](../components/README.md), and [KB defaults](../knowledge-base-defaults/README.md).
+[Agent workflow adapters](agents/issue-tracker.md) connect skills to the existing trackers.
+[History](history/README.md) indexes reviews, specs, execution plans, research, and old UX work.
+`CONTINUE.md` is a requested session handoff, not project status.
+
+## For AI agents
+
+Use progressive lookup: this router → one subsystem → its source and tests. Search more widely
+only when the dependency or behavior calls for it. Preserve `// AI:` links and stable historical
+handles when editing. Before declaring a claim shipped, check integrated source; before declaring
+it effective, require the relevant real-use evidence.

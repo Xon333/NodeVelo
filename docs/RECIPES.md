@@ -45,7 +45,7 @@ future turnover, attended or not.
 5. **Review & acknowledge on `/plan`.** Acknowledgement records the athlete's review in history; deterministic block compilation never consumes retrospective seeds/reflections. Degraded mode (Anthropic key unset or the narrative call fails) still persists closeout facts and deterministic priorities.
 6. Generate + preview + write the next block on `/plan`. `seasonFocus`/`seasonPhase` land on the NEW
    block's `current-block.json` here, not on the retrospective's `block-history.json` entry.
-7. Verify: if coaching directives fired (the common case), `data/intervention-log.json` now exists with this block's directives + baselines — zero directives is a legitimate outcome (no insights cleared the model's gate that day), not a failure; `current-block.json` is the new block.
+7. Verify: if insights qualified for intervention tracking, `data/intervention-log.json` now exists with this block's observations + baselines — zero directives is a legitimate outcome (no insights cleared the model's gate that day), not a failure; `current-block.json` is the new block.
 8. Confirm `/today` shows the new block's first session; the block-completion nudge is gone.
 9. **Owed smoke run (PR #92, first genuine turnover after 2026-08-23):** the retrospective
    closeout shipped with its live LLM path unexercised — before calling this turnover done, run
@@ -93,7 +93,7 @@ Engine logic: colocated `lib/<name>.test.ts` (vitest, node env). Components: col
 
 ## Ship a docs change
 
-Follow the closing ritual's ownership table in [COMPASS.md](COMPASS.md#session-rituals) and the `docs-sweep` skill. Shipped work → ARCHIVE.md; keep README's doc map current; commit docs separately from code.
+Follow [documentation ownership](COMPASS.md#documentation-ownership) and the `docs-sweep` skill. Record shipped work in [shipment history](history/shipments.md); update the Compass when navigation changes. Verify links and preserve historical pointers.
 
 ## Add a workout type
 

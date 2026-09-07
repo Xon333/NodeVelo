@@ -1,7 +1,7 @@
 # FR-5 deterministic authority design
 
 **Date:** 2026-08-29  
-**Status:** Accepted on 2026-08-31
+**Status:** Shipped in PR #107 (`9d1248b`); see [FR-5 acceptance](../../reviews/2026-08-29-fr5-acceptance.md).
 
 ## Outcome
 
@@ -13,7 +13,7 @@ Anthropic remains only where language earns its cost: an optional ride-analysis 
 retrospective interpretation. Neither may change a score, prescription, publication verdict, or
 future plan.
 
-This design implements [ARCHIVE FR-5](../../../ARCHIVE.md#fr-5-deterministic-generation-authority-2026-08-30)
+This design implements [ARCHIVE FR-5](../../../docs/history/shipments.md#fr-5-deterministic-generation-authority-2026-08-30)
 and preserves the contracts in [INVARIANTS](../../INVARIANTS.md).
 Final evidence is recorded in the [FR-5 acceptance record](../../reviews/2026-08-29-fr5-acceptance.md).
 
