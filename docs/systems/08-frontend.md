@@ -38,7 +38,7 @@ Navigation (`components/Nav.tsx`): three tiers — primary (Today/Plan/Trends), 
 | Retrospective + history | Plan | `dashboard/plan.tsx` → `RetroSection`, `BlockHistory` | `/api/retrospective`, `/api/history` |
 | Trends verdict + charts | Trends | `Trends`, `trends/sections.tsx`, `trends/verdict.tsx`, `Sparkline`, `MultiSparkline` | `/api/trends` |
 | Standing guidance / calibration | Model | `StandingGuidance`, `CalibrationPanel` | `/api/trends`, `/api/calibration` |
-| Profile dossier + power curve | Profile | `AthleteProfileForm` (712 lines), `PowerCurveChart`, `IfBandOffsets` | `/api/profile`, `/api/knowledge` |
+| Profile dossier + power curve | Profile | `AthleteProfileForm`, `PowerCurveChart`, `IfBandOffsets` | `/api/profile`, `/api/knowledge` |
 | Generation settings / AI usage / backup | Settings | `BlockSettingsForm`, `PlatformBehaviorForm`, `AiUsageCard` (server-rendered), `BackupRestore` | `/api/settings`, `/api/export`, `/api/import` |
 | KB editor | Knowledge | `KnowledgeBaseEditor` (self-contained lifecycle) | `/api/knowledge` |
 

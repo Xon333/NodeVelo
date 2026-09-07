@@ -39,7 +39,7 @@ ride-finalization and UI refactors remain proposals; the smallest verified fixes
 - ☐ P2 `bug` **MA-5** PR #109: permit independent category winners, then gate their combined cost.
 - ☐ P2 `audit` **MA-6** Primary cleanup owner: exclude modifications to immutable historical plans before committing; preserve working files during reconciliation.
 - ☐ P3 `edu` **MA-7** Primary cleanup owner: retain bounded-search, quadratic-baseline and binary-loading rationale when removing unwanted comment wording.
-- ☐ P3 `edu` **MA-8** Reconcile stale route/module counts, shipped-spec status and AI-positioning copy in owning docs; preserve historical decisions.
+- ☐ P3 `edu` **MA-8** Remaining app metadata/status copy: verify it against deterministic authority. Documentation positioning, route/module counts, and verified stale spec stamps were reconciled in the navigation overhaul; preserve historical decisions.
 
 **Whole-repo hostile review (2026-08-15) — remaining decisions.** Closed findings HR-60…HR-65,
 HR-67, HR-68, HR-70…HR-72 are recorded in [ARCHIVE.md](ARCHIVE.md).

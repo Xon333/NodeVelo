@@ -1,6 +1,6 @@
 # File index
 
-One line per file that matters. The authoritative per-file table — README keeps only a grouped overview. Line counts are approximate (2026-07-25); importer counts = unique importing files.
+One line per file that matters. The authoritative per-file table — README keeps only a grouped overview. This is a curated responsibility map, not a complete generated inventory. Use `rg --files lib app/api components` for current files and `rg` for callers.
 
 ## `lib/` — engine modules
 
@@ -8,14 +8,14 @@ One line per file that matters. The authoritative per-file table — README keep
 
 | Module | Purpose |
 |---|---|
-| `types.ts` | Every shared interface (999 lines, 54 importers — widest blast radius). No test file (types only) |
+| `types.ts` | Every shared interface (shared contract). No test file (types only) |
 | `json-store.ts` | Atomic write + `.bak` rotation + per-file locks + corruption-aware recovery |
-| `data-store.ts` | Typed accessors over json-store; `updatedAt` stamping; self-healing shape merges (31 importers) |
-| `date.ts` | `localToday()` / `resolveToday()` — the ONLY sanctioned "what day is it for the athlete" source (27 importers) |
+| `data-store.ts` | Typed accessors over json-store; `updatedAt` stamping; self-healing shape merges |
+| `date.ts` | `localToday()` / `resolveToday()` — the ONLY sanctioned "what day is it for the athlete" source |
 | `backup.ts` | Backup bundle build + validated exact restore of managed `data/` + `knowledge-base/` trees, plus auto-snapshot rotation (14 kept) |
 | `csrf.ts` | Same-origin write guard; enforced app-wide by root `proxy.ts` |
 | `log.ts` | One-line JSON `logError`/`logWarn` |
-| `client-api.ts` | Client fetch wrapper `api<T>()` + `timeAgo`/`isStale`/`nextMonday` (17 importers) |
+| `client-api.ts` | Client fetch wrapper `api<T>()` + `timeAgo`/`isStale`/`nextMonday` |
 | `text.ts` | Small text helpers |
 | `stats.ts` | `round1/round2/clamp/median/toleranceBand` — the universal leaf (13+ engine importers) |
 
@@ -35,7 +35,7 @@ One line per file that matters. The authoritative per-file table — README keep
 
 | Module | Purpose |
 |---|---|
-| `season.ts` | Rolling coverage selector + event-anchored backward scheduling + validators + prompt formatters (925 lines — [systems/05-season.md](systems/05-season.md)) |
+| `season.ts` | Rolling coverage selector + event-anchored backward scheduling + validators + prompt formatters ([systems/05-season.md](systems/05-season.md)) |
 | `season-signals.ts` | Single assembler of `chooseNextFocus` inputs (generate & season routes share it) |
 | `block-skeleton.ts` | Exact per-week hour targets + feasibility pre-gate + week-hours validator + the day-slot skeleton (`computeBlockSkeleton`/`formatBlockSkeleton`). Change when day-level composition rules need to change — its two invariants (exact-sum, envelope ordering) are property-swept, not example-tested ([06-generation.md § week skeleton](systems/06-generation.md#the-week-skeleton-composition-authority)) |
 | `block-compiler.ts` | Pure deterministic block composition: joint slot-type assignment, progression stages, exact-duration template assembly, typed prescription round trip, and one publication-gate evaluation |

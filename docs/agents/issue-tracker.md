@@ -1,6 +1,9 @@
 # Issue tracker: GitHub
 
-Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
+[ROADMAP](../../ROADMAP.md) owns execution order and [todo](../../todo.md) owns defect acceptance.
+Existing dated specs remain in the repository. GitHub issues are optional shared discussion/spec
+surfaces when requested or needed for an external collaboration; do not copy the queue into issues.
+Use `gh` for authorized GitHub operations; creating an issue is not a routine implementation gate.
 
 ## Conventions
 
@@ -27,7 +30,7 @@ GitHub shares one number space across issues and PRs, so resolve a bare `#42` wi
 
 ## When a skill says "publish to the issue tracker"
 
-Create a GitHub issue.
+Use an existing relevant issue when available. Create an issue only when that external publication is within the user-authorized task; otherwise keep the result in its canonical repository owner.
 
 ## When a skill says "fetch the relevant ticket"
 

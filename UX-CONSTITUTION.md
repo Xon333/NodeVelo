@@ -2,8 +2,8 @@
 
 How to think when designing or changing any NodeVelo surface. [`DESIGN.md`](DESIGN.md) says what the
 UI *looks like* (tokens, type, surfaces); this document says how to *decide*. Precedence:
-Constitution → DESIGN.md → component convention. [`UX-MASTERPLAN.md`](UX-MASTERPLAN.md) ranks the
-open work against these rules.
+Constitution → DESIGN.md → component convention. [ROADMAP](ROADMAP.md) ranks current work. The [UX redesign record](docs/history/ux-redesign.md)
+preserves the original rollout; it is not an active backlog.
 
 Amendment: change this document in the same commit that proves a rule wrong. An intentional
 exception is a *waiver* — documented with its reason (the DESIGN.md §10 pattern), not silently shipped.

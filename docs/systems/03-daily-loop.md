@@ -1,5 +1,7 @@
 # 03 · Daily loop — readiness → ride → debrief
 
+> Current limitation (SR-2): the sync route still wraps part of deterministic Today finalization in `isAnthropicConfigured()`. No-key block generation and closeout work, but full provider-independent daily processing is not yet shipped. Track acceptance in [todo](../../todo.md).
+
 **Why this exists:** a block is a plan; a day is a negotiation. This layer answers "should I actually do today's session, and how did it go?" — deterministic readiness signals, an athlete-confirmed override path, and a post-ride debrief the athlete can trust. **Where it sits:** reads [02-scoring](02-scoring-and-learning.md)'s model and today's sync; feeds dispositions back into the ledger; surfaces on the Today page ([08-frontend](08-frontend.md)). **Tradeoff:** signals never auto-mutate the plan — only the athlete-confirmed morning-check path does; advisory-by-default costs automation but preserves trust.
 
 Surface: the Today page (auto-switches pre-ride ↔ post-ride when a synced ride matches today's **local** date — always `localToday()`/`resolveToday()` from `lib/date.ts`, never UTC).
@@ -15,13 +17,16 @@ Surface: the Today page (auto-switches pre-ride ↔ post-ride when a synced ride
 
 ## After the ride
 
-`doSync()` (SyncProvider) → `POST /api/sync` computes everything deterministic — zones, interval match, PRs (`lib/pr.ts`, curve-to-curve), execution score, advised intake — into `data/today-analysis.json`, then returns `analysisPending: true`. The client then calls `POST /api/analyze` (the deferred LLM step) for the coach note ([ADR-0005](../DECISIONS.md)); with `autoPostCoachNote` on, the note is also posted to Intervals.icu as a NOTE event.
+`doSync()` (SyncProvider) → `POST /api/sync` computes everything deterministic — zones, interval match, PRs (`lib/pr.ts`, curve-to-curve), execution score, advised intake — into `data/today-analysis.json` when the current configuration guard permits it (SR-2), then returns `analysisPending: true`. The client then calls `POST /api/analyze` (the deferred LLM step) for the coach note ([ADR-0005](../DECISIONS.md)); with `autoPostCoachNote` on, the note is also posted to Intervals.icu as a NOTE event.
 
 Post-ride surfaces on Today: `TodayRideCard` (rep breakdown, `RideTrace` power chart, PR banner, coach note), **session disposition** chips (`SessionDisposition.tsx` — "compromised" is the one that changes learning), and the **fuel prompt** (`lib/fuel-prompt.ts` nudges logging when a long/interval ride has no carbs logged).
 
 Self-directed intent parsing is deterministic: deferred `POST /api/intent` parses strict labelled bullets, matches synced Intervals.icu laps, and grades supported objectives without contacting Anthropic. The Today debrief renders the resulting overlay; the separate `/api/analyze` call only phrases the already-computed score and evidence.
 
-**Nutrition is code, not AI** ([DECISIONS](../DECISIONS.md) ADR-0002 applied to food): `lib/nutrition.ts` computes daily targets deterministically (base + session kJ + a buffer that self-adjusts ±150 kcal against the synced 7-day weight trend, capped 0–600; flat target on rest days) plus pre/in/post-ride carbs. The fuel prompt's rules are pure code too: a logged `0` is a real "fasted" data point, never nudged; the logged-vs-optimum gap only surfaces once the athlete's derived `carbsOptimum` reaches medium/high confidence — a population default never masquerades as personalized. The LLM phrases these numbers verbatim; it never computes them.
+**Nutrition** is computed by `lib/nutrition.ts`; the [nutrition system](09-nutrition.md) owns the
+formula, calibration, and goal-directed buffer contract. A logged `0` is a real fasted data point,
+not missing intake. Personalized fuel nudges require a trustworthy derived optimum. Optional AI
+language receives precomputed values.
 
 ## Missed/failed sessions
 
@@ -35,5 +40,5 @@ Self-directed intent parsing is deterministic: deferred `POST /api/intent` parse
 | New readiness signal | `readiness.ts` → wire into `athlete-state.athleteStateInputsFrom` and/or `coach-snapshot.resolveCoachSignals`; weights via `calibration.resolveAthleteStateWeights` |
 | State-fusion weights/bands | `calibration.ts` (defaults) / Settings overrides; spec's tunable-knobs section |
 | Morning-check decision rules | `morning-check.decideMorningCheck` (pure, tested) |
-| Today-card content | `components/dashboard/today.tsx` (~960 lines — the page's named-export module, already flagged as a split candidate) |
+| Today-card content | `components/dashboard/today.tsx` (named-export module) |
 | No-block envelope/suggestion logic | `lib/weekly-envelope.ts` (role/range/persistence), `lib/session-suggestion.ts` (focus→session mapping), `lib/no-block-summary.ts` (composition) |

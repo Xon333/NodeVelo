@@ -13,6 +13,18 @@ Use [docs/COMPASS.md](docs/COMPASS.md) when you need orientation or a subsystem 
 - Domain vocabulary and decisions live in [docs/GLOSSARY.md](docs/GLOSSARY.md) and [docs/DECISIONS.md](docs/DECISIONS.md), not separate `CONTEXT.md` or `docs/adr/` stores.
 - For tracker, triage, or domain-document workflows, see [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md), [triage-labels.md](docs/agents/triage-labels.md), and [domain.md](docs/agents/domain.md), respectively.
 
+# Documentation and task state
+
+[Compass](docs/COMPASS.md#documentation-ownership) assigns one owner per fact. Read one relevant
+system document, then its source/tests; load historical plans and reviews only for a named question.
+Update the owning doc in the same task when behavior changes. Preserve stable IDs and historical
+rationale; avoid cached file/line counts and duplicate status lists.
+
+[ROADMAP](ROADMAP.md#follow-this-queue) owns default work order. An explicit user task defines the
+current scope; it does not silently reopen other frozen work. Track unshipped scope with its branch/PR,
+acceptance criterion, and next action. A dirty primary checkout is preserved, not an implicit task
+handoff; use [Workflow recovery](WORKFLOW.md#dirty-primary-checkout) before reconciling it.
+
 # Completion and decisions
 
 Carry authorized implementation through relevant verification, fixes, and the sanctioned finish workflow below. Choose routine details from existing conventions. Ask when missing information materially changes the result or an action exceeds authorization. Plan-only and review-only requests end with the requested artifact.

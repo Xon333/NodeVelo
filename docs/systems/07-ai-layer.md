@@ -40,7 +40,7 @@ Model IDs also appear in `ai-usage.ts` pricing keys. Update both locations toget
 - Retrospective language receives one route-owned effective closeout window. Normal completion ends
   at the scheduled block end; explicit early end stops at the athlete's local closeout date. Planned
   and actual hours, block-window ride evidence, and the stored history totals use that same window.
-- Empty/missing configuration degrades optional language paths; it does not prevent block generation.
+- Empty/missing configuration does not prevent block generation or deterministic closeout. Sync still gates part of deterministic Today finalization on configuration (SR-2 in [todo](../../todo.md)); an LLM-free function is not necessarily a provider-independent route.
 - A changed language path requires one live API smoke run before completion.
 
 Ride-intent identification is deterministic. The analysis path receives the completed intent verdict and matched evidence; it does not discover or grade intent.
