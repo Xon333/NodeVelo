@@ -20,6 +20,14 @@ CLAUDE.md remains a single import of AGENTS.md. Required checks and project safe
 
 ---
 
+## UXA-2 — Unconfigured Today scratch-browser evidence (2026-09-05)
+
+The maintainer audit verified the unconfigured Intervals.icu message and blocked-generation state in
+headless Chromium on development and production scratch servers. This closes the old unconfigured-copy
+check only; populated athlete/device/assistive-technology journeys remain unverified.
+
+---
+
 ## MA-1 — Preserve intent retries after interval HTTP failure (2026-09-05)
 
 The deterministic intent runner now opts into interval-fetch errors, leaving the note eligible for
