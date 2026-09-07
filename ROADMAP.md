@@ -13,10 +13,9 @@ and [decision log](docs/DECISIONS.md) still govern product scope.
 |---:|---|---|
 | **1 — NOW** | **SR-1: verify and resolve concurrent publication rollback.** Two writers may receive the same remote event IDs; a CAS loser then deletes them. | A deterministic two-writer reproduction either disproves the report with recorded evidence, or a separately reviewed fix preserves the winner's events/history and passes required checks. |
 | 2 | **SR-2: verify and restore provider-independent ride finalization.** Deterministic Today processing is still inside `isAnthropicConfigured()`. | A supported ride sync without an Anthropic key produces deterministic Today evidence and ledger enrichment; only optional prose depends on AI. |
-| 3 | **Reconcile remaining primary-checkout residue.** Codex-only helpers and documentation ownership are now aligned. Classify the remaining local comment edits and unique reports; exclude immutable-plan edits and retain rationale (MA-6/7). | Relevant work is integrated or explicitly preserved/deferred; primary changes are deliberately reconciled before sync/pruning. No blanket stash, reset or deletion. |
-| 4 | **Finish the existing FR-6 work in PR #109.** Resolve MA-4/5 and adjudicate other review claims once, then complete the bounded comparison. | One consistent protocol, valid measured costs, owner usefulness review, and keep/switch/retire decisions for each of the three language categories; PR integrated or closed with an explicit disposition. |
-| 5 | **Small reliability backlog, one fix at a time:** MA-3 tracing → SR-3 local date → MA-2/SR-4 request validation → SR-5 backup-test synchronization. | Each finding has a regression/evidence check and is archived on shipment. No combined cleanup PR. |
-| 6 | **FR-7**, then **FR-8**, only when their existing entry gates clear. | See package exits below. Do not pre-plan either while earlier work is open. |
+| 3 | **Finish the existing FR-6 work in PR #109.** Resolve MA-4/5 and adjudicate other review claims once, then complete the bounded comparison. | One consistent protocol, valid measured costs, owner usefulness review, and keep/switch/retire decisions for each of the three language categories; PR integrated or closed with an explicit disposition. |
+| 4 | **Small reliability backlog, one fix at a time:** MA-3 tracing → SR-3 local date → MA-2/SR-4 request validation → SR-5 backup-test synchronization. | Each finding has a regression/evidence check and is archived on shipment. No combined cleanup PR. |
+| 5 | **FR-7**, then **FR-8**, only when their existing entry gates clear. | See package exits below. Do not pre-plan either while earlier work is open. |
 
 P1 reports are queued for reproduction, not claimed as newly live-verified failures.
 [Evidence/dispositions](docs/reviews/README.md) · [Defect acceptance](todo.md)
@@ -24,13 +23,14 @@ P1 reports are queued for reproduction, not claimed as newly live-verified failu
 During the freeze, normal riding and FR-9 recording are the only default parallel lane. Newly
 demonstrated P1 failures may interrupt; other ideas do not reorder the queue. At task end, record
 merged/disproved/blocked status and advance. If FR-6 needs credentials or owner scoring, state the
-blocker and continue at row 5 without marking Phase 3 complete.
+blocker and continue with the small reliability backlog without marking Phase 3 complete.
 
 ## State of the app
 
 Deterministic compilation, publication checks, restore safeguards, the early-closeout correction,
 and intent retries are shipped. PR #113 aligned docs and helpers. PR #109 remains unfinished;
-primary-checkout residue remains separate. [Shipment history](docs/history/shipments.md)
+primary-checkout residue is reconciled: original files are preserved in a local recovery bundle,
+unique reports remain historical reference, and the primary checkout syncs cleanly. [Shipment history](docs/history/shipments.md)
 
 ## Which records should I follow?
 

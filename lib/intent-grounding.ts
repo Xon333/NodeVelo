@@ -35,7 +35,7 @@ export function groundsDuration(note: string, min: number): boolean {
   const hours = valuesFor(masked, "(?:hours?|hrs?|hr|h)\\b", 60);
   const minuteSeconds = [...masked.matchAll(/(\d+(?:\.\d+)?)\s*m(?:in(?:ute)?s?)?\s*(\d+(?:\.\d+)?)\s*s(?:ec(?:ond)?s?)?\b/gi)]
     .map(([, minutesPart, secondsPart]) => Number(minutesPart) + Number(secondsPart) / 60);
-  // ponytail: bare colon notation is ambiguous; add contextual grammar only when note syntax disambiguates it.
+  // bare colon notation is ambiguous; add contextual grammar only when note syntax disambiguates it.
   return (
     hasValue([...minutes, ...hours, ...minuteSeconds], min, 1) ||
     inRanges(masked, min, minuteUnit, 1) ||
