@@ -220,7 +220,7 @@ export function buildRideScores(
     // rides BEFORE it (no self-reference). Null (too little Z2 / no baseline) → no effect. Hoisted above
     // the planned/off-plan split — both branches consume it (planned Z2/Recovery merges it via
     // mergedEasyRead, off-plan uses it as the sole aerobic read) — so it's computed once, not twice.
-    // ponytail: O(rides) per call → O(n²) across a full ledger rebuild; pre-accepted (lib/aerobic.ts).
+    // O(rides) per call → O(n²) across a full ledger rebuild; pre-accepted (lib/aerobic.ts).
     const easyAerobicEffPct = aerobicEffPct(act, z2PwHrBaselineBefore(activities, act.date));
     // Context-stamp (ROADMAP #2): the objective form the athlete carried into this date.
     // Spread-ready so an entry stays context-free when no wellness covers the date.

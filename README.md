@@ -1,79 +1,99 @@
 # NodeVelo
 
-**A personal cycling training companion built around how you actually ride.**
+A personal cycling coach built on [Intervals.icu](https://intervals.icu).
 
-NodeVelo turns your [Intervals.icu](https://intervals.icu) history, training goals, and available
-time into daily guidance and structured training blocks. Review the plan, publish it to your
-Intervals.icu calendar, ride, and use the execution evidence to inform the next block.
+Intervals.icu holds the rides, physiology, and calendar. NodeVelo adds the coaching logic:
+evaluate how a session was executed, track patterns across rides, choose the next training focus,
+and compile a structured block that the athlete can review and publish back to the calendar.
+It also handles the day between plans: readiness, session adjustments, and fueling.
 
-Built for one athlete running it locally. The project is in active personal use under a
-**feature freeze focused on reliability and real-world validation**. Coaching effectiveness and
-nutrition accuracy are still being evaluated; a passing test suite does not establish either.
+The project is built for one athlete and runs locally. The question behind it is whether a system
+that remembers training execution and the athlete's intent can make the next decision more useful.
+That is the purpose of the learning loop; its effectiveness is still being tested through real use.
 
-## What makes it different
+## The coaching model
 
-- **Training decisions you can inspect.** TypeScript owns scoring, readiness, nutrition,
-  focus selection, workout composition, and publication checks. Claude adds optional ride notes
-  and retrospective language; it does not generate the training plan.
-- **History with provenance.** Past execution scores retain the physiology and scoring context
-  used at the time. Athlete-stated intent is evaluated separately, so a self-directed ride need
-  not be judged as a failed prescribed session. Missing evidence stays unscored.
-- **A continuing training loop.** Daily guidance, block planning, execution review, and the
-  athlete model share data. Goals belong to the athlete; physiology comes from Intervals.icu.
-- **Data you can own.** JSON and Markdown on your machine, with export/restore support.
-  Intervals.icu remains the training-data source and calendar destination.
+**Execution has context.** A prescribed ride is evaluated against its session targets. A
+self-directed ride can instead be evaluated against supported, labelled intent in the athlete's
+notes, using Intervals.icu laps as evidence. An unmatched segment stays ungraded. Past ledger
+entries retain the FTP and scoring context used at the time; a later FTP change does not rewrite them.
 
-## In the app
+**Learning is explicit.** Recency-weighted execution by workout type, trends, and the power profile
+inform focus and durability selection. Selected calibration values can be derived from the athlete's
+data when evidence clears their gates; others remain defaults or manual overrides. The Model page
+shows these distinctions. Markdown notes and retrospective reflections remain reference/history.
 
-| Surface | What you use it for |
-|---|---|
-| **Today** | Readiness, the planned session or no-block suggestion, ride debrief, and fueling targets |
-| **Plan** | Season goals and events; preview, publish, move, swap, and close training blocks |
-| **Trends & Model** | Execution trends, training signals, learned values, and their evidence |
-| **Profile, Settings & Knowledge** | Athlete intent, training constraints, backups, AI usage, and editable reference notes |
+**Training decisions are code.** TypeScript chooses the block's sessions, progression, durations,
+workout syntax, and nutrition. Validators classify publication blockers, preferences, and advisories.
+Claude supplies optional ride commentary and retrospective language. The generated plan is not an
+LLM response checked after the fact.
 
-[Capabilities and current limits](FEATURES.md) · [Architecture and code navigation](docs/COMPASS.md) · [Development priorities](ROADMAP.md)
+**The athlete owns intent; Intervals.icu owns physiology.** Goals, weak points, availability, and
+weight goals are explicit inputs. FTP, zones, rides, and wellness come from sync. Plans reach the
+calendar only after acceptance; completed blocks leave execution evidence for subsequent decisions.
+
+## Two ways to train
+
+**Self-directed, without a NodeVelo block.** Keep choosing your rides in Intervals.icu. NodeVelo
+uses synced load and execution to show a weekly load envelope, one session suggestion, readiness,
+and fueling. After the ride, supported labelled notes and Intervals.icu laps let it evaluate what
+you intended. It does not need to own a block to be useful, and it does not import an arbitrary
+Intervals.icu plan as a NodeVelo prescription.
+
+**With a training block.** Generate 2/4/6/8 weeks from goals, available time, and current training
+state. Inspect the sessions and publication findings, accept the block onto Intervals.icu, then
+move or swap future sessions as needed. Closeout records execution evidence for reviewing the block.
+
+**Nutrition applies to both.** Daily targets combine estimated maintenance, synced exercise burn,
+and a weight-goal buffer. Maintenance calibration distinguishes rest and training days. The app shows
+how the target was derived, alongside in-ride fuel and loading guidance. Logged intake and weight
+quality limit what it can infer. [Feature details](FEATURES.md) · [Nutrition model](docs/systems/09-nutrition.md)
+
+## Direction
+
+The next feature work is to complete manual workout curation and reuse, building on the existing
+local library and individual-workout export to Intervals.icu. Completing the library loop is
+**planned**, not shipped. Reusable whole-block export to Intervals.icu's training-plan feature is a
+separate integration direction, not the current calendar publisher.
+
+Correctness repairs come first, followed by the existing language-cost comparison, library completion,
+and prospective nutrition/block evidence. [ROADMAP](ROADMAP.md) defines the order and gates.
 
 ## Run locally
 
-Use Node.js 22 LTS and npm. You need an Intervals.icu account and API credentials.
+Node.js 22 and npm; an Intervals.icu account with API access.
 
 ```bash
 git clone https://github.com/Xon333/Nodevelo.git
 cd Nodevelo
 npm ci
 cp .env.local.example .env.local
-# Fill in your credentials, then:
+# Set credentials in .env.local
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). Configure your profile and training availability,
-then sync Intervals.icu before generating a block.
+Open [localhost:3000](http://localhost:3000), configure the athlete profile and training availability,
+and sync before generating a block.
 
-| Variable | Purpose |
+| Setting | Source / use |
 |---|---|
-| `INTERVALS_API_KEY` | Intervals.icu API key from Settings → Developer |
-| `INTERVALS_ATHLETE_ID` | Athlete ID, such as `i12345` |
-| `ANTHROPIC_API_KEY` | Optional language features; see the current limitation below |
-| `NODEVELO_BACKUP_DIR` | Optional automatic snapshot destination; see [.env.local.example](.env.local.example) |
+| `INTERVALS_API_KEY` | Intervals.icu → Settings → Developer |
+| `INTERVALS_ATHLETE_ID` | Athlete ID, e.g. `i12345` |
+| `ANTHROPIC_API_KEY` | Optional commentary and retrospectives; current caveat below |
+| `NODEVELO_BACKUP_DIR` | Optional automatic snapshot destination |
 
-**Current limitation:** block generation and deterministic closeout work without Anthropic, but
-part of Today ride finalization is still incorrectly gated on its configuration. This is tracked
-as **SR-2** in [the defect list](todo.md); the complete daily loop is not yet provider-independent.
+**Current caveat:** part of deterministic Today finalization still requires Anthropic configuration
+([SR-2](todo.md)); block generation and deterministic closeout work without it.
 
-## Data and deployment
+State is JSON in `data/` and Markdown in `knowledge-base/`, both gitignored. Optional language calls
+send ride/block context to Anthropic and incur API costs. The server binds to localhost, has no
+authentication, and requires persistent disk. [Data flow](docs/systems/01-sync-and-data.md) ·
+[AI call inventory](docs/systems/07-ai-layer.md)
 
-Runtime state lives in gitignored `data/` and `knowledge-base/`; committed defaults support a fresh
-clone. Optional language requests send ride or block context to Anthropic and incur API costs.
-Sync contacts Intervals.icu; publishing and calendar changes write back there. See
-[the AI boundary](docs/systems/07-ai-layer.md) for the call inventory.
+## Development
 
-The server binds to localhost and has no authentication. Run it on a machine with persistent disk;
-public hosting and ephemeral serverless storage are outside the supported setup.
+Next.js 16 App Router · React 19 · TypeScript · Tailwind CSS 4 · Vitest.
 
-## Develop
-
-Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4, and Vitest.
-Start with [the Compass](docs/COMPASS.md), select the relevant subsystem, and follow
-[WORKFLOW.md](WORKFLOW.md) for an isolated task and required checks. Agents read [AGENTS.md](AGENTS.md).
-The [roadmap](ROADMAP.md) owns work order; historical reviews are evidence, not additional queues.
+[Compass](docs/COMPASS.md) maps the architecture and code. [Workflow](WORKFLOW.md) covers task
+worktrees and verification; [AGENTS.md](AGENTS.md) contains agent rules. Current work is a reliability
+and validation freeze, ordered in [ROADMAP.md](ROADMAP.md).

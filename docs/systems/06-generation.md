@@ -88,6 +88,20 @@ The verdict is persisted at generation time under `verdictHash(days, blockParams
 
 Core gate owners remain `workout-validate.ts`, `schedule-validate.ts`, `block-skeleton.ts`, `session-requirements.ts`, season validation, and structural checks in `publication-gate.ts`. One fact has one warning owner: skeleton conformance owns day-slot facts, week-hours validation owns totals, and recovery density owns recovery composition.
 
+## Workout library and Intervals.icu plans
+
+| Path | Current state |
+|---|---|
+| `workout-library-service.ts` → local library | Manual promotion of eligible completed quality workouts is implemented |
+| `workout-library-export.ts` → Intervals.icu workout folder | Individual-workout export, stored remote ID, lookup-before-create retry protection |
+| Local library → compiler quality slots | Full user curation/reuse/provenance loop remains FR-7; current compiler uses its typed catalogue |
+| Accepted block → Intervals.icu calendar | Existing `/api/write` publication path |
+| Accepted block → reusable Intervals.icu training plan | Separate owner-raised direction; not implemented or included in the current FR-7 exit |
+
+The [original library design](../superpowers/specs/2026-08-02-proven-workout-library-generation-design.md)
+predates FR-5. Its AI slot-authoring fallback and repair pipeline are superseded; use today's compiler
+contracts when scoping reuse. [ROADMAP](../../ROADMAP.md) owns readiness and acceptance.
+
 ## Known rough edges
 
 - Event duration comes from the displaced slot because the event model has no authoritative duration field.

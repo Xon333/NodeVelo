@@ -85,7 +85,7 @@ export function buildMovePayloads(
 // limits (each violation is a warning, never a silent mutation):
 //   - future-only, both sides — past days are frozen history;
 //   - single moves onto rest/empty days only — a pairwise swap made on Intervals.icu surfaces as two
-//     conflict warnings for manual resolution (ponytail: handle singles; add swap pairing if real use
+//     conflict warnings for manual resolution (handle singles; add swap pairing if real use
 //     hits the warning often);
 //   - a vanished future workout event warns — the app never deletes a prescription off the calendar's say-so.
 // An accepted inbound move leaves the event's external_id stamped with its OLD date — this function

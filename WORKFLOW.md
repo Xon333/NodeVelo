@@ -1,97 +1,77 @@
-# Workflow cheat sheet
+# Development workflow
 
-[AGENTS.md](AGENTS.md) owns operating rules. [CLAUDE.md](CLAUDE.md) imports it; keep policy changes in the shared file.
-
-## Daily loop
-
-Start or resume an isolated task, implement the requested outcome, verify it, and finish through the sanctioned helper. On clean primary `main`, `npm run sync` refreshes the integration mirror and prunes merged worktrees. Preserve local edits if sync is blocked; task creation fetches current `origin/main` independently.
-
-## Dirty primary checkout
-
-A failed sync is a state problem to inspect, not a reason to stash or reset everything.
-
-1. Run `git status --short --branch`, `git diff --stat`, and `git worktree list` in primary.
-   Read relevant diffs; compare with `origin/main` and open PRs before calling anything unfinished.
-2. Preserve unrelated edits and untracked reports. Start the authorized task with
-   `npm run start:agent-task -- codex <task-name>`; the helper fetches `origin/main` independently.
-   Change directory to the reported worktree before editing or running checks.
-3. If reconciliation is the task, group each dirty file as already integrated, unique unfinished
-   work, or an intentional local change. Keep unique research as dated evidence. Exclude edits to
-   immutable plans, preserving any useful rationale in current docs instead.
-4. Port only the selected changes to the isolated task, verify, and integrate. Record remaining
-   groups and their next action in the existing tracker. Remove primary residue only after its
-   contents and ownership have been verified; never reset or prune merely because a PR merged.
-
-Primary dirt and old worktrees are not additional priorities. The roadmap decides which unfinished
-work to carry next. `CONTINUE.md` and old plan checklists do not override it.
-
-## Commands
-
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Local development server on port 3000 |
-| `npm run dev:preview` | Isolated preview server on port 3100 |
-| `npm run check` | Typecheck, lint, application tests, workflow tests, sync tests, and documentation links |
-| `npm run check-links` | Check project documentation links |
-| `npm run sync` | Refresh clean primary main and prune merged worktrees |
-| `npm run start:agent-task -- codex <task-name>` | Create an isolated Codex task from current origin/main |
-| `npm run finish:agent-task` | Verify committed task work, push, open a PR, and enable squash auto-merge after required checks |
-| `npm run merge:agent-task -- <pr>` | Check and merge an existing Codex PR |
-| `npm run reset:today` | Clear today's cached analysis through the local dev server |
+[AGENTS](AGENTS.md) owns policy. [ROADMAP](ROADMAP.md#follow-this-queue) selects work;
+[Compass](docs/COMPASS.md) routes implementation questions.
 
 ## Codex workflow
 
-Codex owns implementation and integration. Ox/Claude reciprocal-review gates are deprecated. The sanctioned helpers retain branch, clean-tree, authentication, and verification checks; no manual push, PR creation, or merge commands bypass them.
-
-Run commands from the task worktree. Stage only task-owned files and commit before finishing. Inspect the resulting PR status: enabling auto-merge is not confirmation that the PR has merged. A new commit requires checks against the updated head. Merged remote branches are removed by repository settings; local task cleanup happens through sync.
-
-The helpers implement the Codex-only policy in AGENTS.md. Policy changes must update the
-corresponding helper and workflow tests in the same task.
-
-### Codex + opencode workflow
-
-Legacy links to this heading refer to the [current Codex workflow](#codex-workflow).
-
-### Reviewing an agent PR
-
-Inspect the actual diff against the requested behavior and affected repository contracts. Check relevant recurring bug classes from AGENTS.md and that promised callers, persistence, and UI paths are wired. Record genuinely unfinished scope in ROADMAP or todo. Fix substantive findings and rerun affected checks before finishing. An outside review is optional unless the owner explicitly requests it.
-
-### Optional joint planning
-
-Joint planning is user-invoked. Work from one shared issue or spec and bring unresolved product decisions to the user. It is not a prerequisite for routine implementation.
-
-### Two agents at once
-
-Independent tasks may use separate Codex worktrees with disjoint file ownership. Overlapping work uses one writer and a read-only reviewer. Research and review can inspect files without owning an implementation branch.
-
-### When automation stops
-
-| Situation | Next action |
+| Step | Command / result |
 |---|---|
-| Uncommitted task files | Review and commit only task-owned files, then retry |
-| Failed checks | Fix regressions caused by the task; identify unrelated failures without claiming a pass |
-| Merge conflict | Reconcile both changes deliberately; use the merge-conflict skill |
-| Required checks pending | Wait for the PR's checks; inspect failures if they occur |
-| GitHub login expired | Report the required login step and continue independent local work |
-| Task blocked | Report the concrete blocker and completed work; use handoff only when a handoff is requested |
+| Refresh clean primary `main` | `npm run sync` |
+| Start an isolated task | `npm run start:agent-task -- codex <task-name>` |
+| Enter it | `cd` to the worktree printed by the helper; run `npm ci` if dependencies are absent |
+| Work and verify | Change task-owned files; use focused checks, then required verification |
+| Commit | Stage explicit paths; `git commit` |
+| Finish | `npm run finish:agent-task` runs all checks, pushes, opens the PR, and enables auto-merge |
+| Confirm | Inspect the PR: merged, pending, or failed. Auto-merge enabled is not a merge result. |
 
-## Skills (`/name`)
+Run work and finish commands **inside the task worktree**. For an existing Codex PR,
+`npm run merge:agent-task -- <pr>` checks requirements and merges. Policy/helper changes ship together.
 
-| Skill | Use when |
+## Dirty primary checkout
+
+Inspect `git status --short --branch`, `git diff --stat`, and `git worktree list` before changing it.
+A failed sync does not prevent task creation: the start helper fetches `origin/main` independently.
+
+| What you find | Action |
 |---|---|
-| `/whats-next` | Choose work from the roadmap |
-| `/agent-orchestration` | Coordinate useful independent delegated tasks |
-| `/diagnosing-bugs` | Investigate a bug with an uncertain cause |
-| `/tdd` | Implement behavior through a meaningful red/green test loop |
-| `/code-review` | Review a diff or verify received feedback |
-| `/docs-sweep` | Reconcile documentation with shipped state |
-| `/triage-audit` | Evaluate an external audit against the repository |
-| Requested handoff | Use the available handoff workflow; it is not a required task-close step |
+| Already-integrated edits | Compare exact content before clearing local residue |
+| Unique unfinished work | Port only the selected scope into an isolated task |
+| Untracked research or reviews | Preserve; check whether GitHub already has an identical copy |
+| Edits to immutable plans | Exclude from integration; retain useful rationale in current docs |
+| Uncertain ownership | Leave intact and identify the unresolved file/change |
 
-## Standing rules worth remembering
+Reconciliation finishes when each group is integrated, explicitly retained, or deliberately discarded
+by its owner. Never blanket-stash/reset to make sync pass. Old worktrees are not additional tasks.
 
-CONTINUE.md is maintained through handoff. Preserve stable roadmap IDs. Navigation and documentation ownership are in [Compass](docs/COMPASS.md#session-rituals); operating safeguards are in [AGENTS.md](AGENTS.md).
+## Commands
+
+| Command | Use |
+|---|---|
+| `npm run dev` / `npm run dev:preview` | Local server on 3000 / isolated preview on 3100 |
+| `npm run check` | Typecheck, lint, application tests, workflow/sync tests, documentation links |
+| `npm run check-links` | Relative Markdown paths and headings; changed skill links need a separate check |
+| `npm run reset:today` | Clear today's cached analysis through the running dev server |
+
+## When automation stops
+
+| State | Next action |
+|---|---|
+| Dirty task | Review and commit task-owned files |
+| Failed checks | Fix task regressions; identify unrelated baseline failures |
+| Conflict | Reconcile both changes using the merge-conflict workflow |
+| Pending GitHub checks | Wait or inspect the failing run |
+| Expired authentication | Complete GitHub login, then retry |
+| Merge succeeded, local cleanup failed | Confirm remote merge; preserve dirty primary and clean up separately |
+
+## Reviewing an agent PR
+
+Compare the diff with the requested outcome, affected contracts, and actual callers. Verify fixes
+before finishing; record unfinished scope in its tracker. Outside review is optional unless requested.
+
+## Two agents at once
+
+The current roadmap freeze allows one implementation task. If the owner requests parallel work,
+use separate worktrees and disjoint files; overlapping work uses one writer and a read-only reviewer.
+
+## Optional joint planning
+
+When requested, use one shared issue/spec. A second plan or review queue is unnecessary.
+
+## Codex + opencode workflow
+
+Historical anchor for the [current Codex workflow](#codex-workflow). Reciprocal-review gates are retired.
 
 ## Block-turnover runbook
 
-See [Recipes](docs/RECIPES.md#turn-over-a-block-end--retrospective--next-block).
+Use [Recipes](docs/RECIPES.md#turn-over-a-block-end--retrospective--next-block).

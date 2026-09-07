@@ -38,10 +38,9 @@ Repo-specific meanings. Where a term has a common sports-science meaning, the en
 
 | Term | Meaning here |
 |---|---|
-| **Writer** | The agent that owns a task's implementation branch: Codex on `codex/*` or opencode ox alpha on `ox/*`. The writer fixes review findings and never approves its own PR. |
-| **Reciprocal review** | Review of the writer's current PR head by the other agent, covering repository standards/invariants, the originating issue or spec, and verification evidence. A new commit makes the prior approval stale. |
-| **Joint planning** | An optional, user-invoked ordered pass in which both agents edit or comment on one GitHub issue/spec. It is not a prerequisite for implementation. |
-| **User merge override** | An explicit, PR-scoped instruction from the user to merge without reciprocal review. The instruction is recorded on that PR; a general request to merge when done is not an override. |
+| **Writer** | Codex owns a `codex/*` task branch and its integration. Current rules: [AGENTS](../AGENTS.md). |
+| **Reciprocal review / user merge override** | Retired workflow gates; historical references do not require them today. |
+| **Joint planning** | Optional owner-requested collaboration on one issue/spec. |
 
 ## Scoring & learning terms
 
