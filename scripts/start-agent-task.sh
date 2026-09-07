@@ -6,11 +6,11 @@ die() {
   exit 1
 }
 
-usage="usage: scripts/start-agent-task.sh <claude|codex|ox> <task-name>"
+usage="usage: scripts/start-agent-task.sh codex <task-name>"
 
 valid_agent() {
   case "$1" in
-    claude|codex|ox) ;;
+    codex) ;;
     *) return 1 ;;
   esac
 }

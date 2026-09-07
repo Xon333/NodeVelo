@@ -25,7 +25,7 @@ case "$1 $2" in
       *) exit 2 ;;
     esac
     ;;
-  "pr checks") echo checks >> "$MOCK_LOG" ;;
+  "pr checks") echo checks >> "$MOCK_LOG"; exit "${MOCK_CHECK_EXIT:-0}" ;;
   "pr comment") printf 'comment:%s\n' "$5" >> "$MOCK_LOG" ;;
   "pr merge") echo merge >> "$MOCK_LOG" ;;
   *) exit 2 ;;
@@ -35,7 +35,7 @@ chmod +x "$test_dir/bin/gh"
 
 run_gate() {
   PATH="$test_dir/bin:$PATH" MOCK_LOG="$log" MOCK_BRANCH="${MOCK_BRANCH:-codex/task}" \
-    MOCK_HEAD="${MOCK_HEAD:-abc123}" MOCK_COMMENTS="${MOCK_COMMENTS:-}" bash "$script" 42 "$@"
+    MOCK_CHECK_EXIT="${MOCK_CHECK_EXIT:-0}" MOCK_HEAD="${MOCK_HEAD:-abc123}" MOCK_COMMENTS="${MOCK_COMMENTS:-}" bash "$script" 42 "$@"
 }
 
 expect_rejected() {
@@ -47,29 +47,19 @@ expect_rejected() {
   ! grep -q '^merge$' "$log"
 }
 
-unset MOCK_COMMENTS
-expect_rejected
-
-MOCK_COMMENTS="Agent-Review: reviewer=ox head=old123 verdict=approved"
-expect_rejected
-
-unset MOCK_COMMENTS
-expect_rejected --approve-as codex
-
 : > "$log"
-run_gate --approve-as ox >/dev/null
-grep -Fxq "comment:Agent-Review: reviewer=ox head=abc123 verdict=approved" "$log"
+run_gate >/dev/null
 grep -Fxq checks "$log"
 grep -Fxq merge "$log"
 
 : > "$log"
-MOCK_COMMENTS="Agent-Review: reviewer=ox head=abc123 verdict=approved" run_gate >/dev/null
-grep -Fxq merge "$log"
+if run_gate --user-override >/dev/null 2>&1; then
+  echo "deprecated review modes must be rejected" >&2
+  exit 1
+fi
 
-: > "$log"
-unset MOCK_COMMENTS
-run_gate --user-override >/dev/null
-grep -Fxq "comment:Agent-Review: reviewer=user head=abc123 verdict=override" "$log"
-grep -Fxq merge "$log"
+MOCK_BRANCH=ox/task expect_rejected
+MOCK_BRANCH=claude/task expect_rejected
+MOCK_CHECK_EXIT=1 expect_rejected
 
 echo "merge-agent-task gate passes"
