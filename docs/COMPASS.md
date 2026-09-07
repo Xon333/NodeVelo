@@ -1,92 +1,89 @@
 # Compass
 
-Start here to work on NodeVelo. Read the mental model once, then open only the row relevant to
-your task. [README](../README.md) introduces the product; [ROADMAP](../ROADMAP.md#follow-this-queue)
-selects work; [WORKFLOW](../WORKFLOW.md) explains how to deliver it.
+**Understand the product:** [README](../README.md) · **Choose work:** [ROADMAP](../ROADMAP.md#follow-this-queue) ·
+**Start/finish a task:** [WORKFLOW](../WORKFLOW.md) · **Agent rules:** [AGENTS](../AGENTS.md)
 
 ## The mental model (60 seconds)
 
-NodeVelo is a local, single-athlete training loop. Intervals.icu supplies measured data; the athlete
-supplies intent. Deterministic engines derive evidence and compile plans. AI adds optional wording.
+Three kinds of state drive NodeVelo: synced physiology, athlete-owned intent, and execution history.
+The engines turn them into daily guidance and a block proposal; acceptance writes to Intervals.icu.
 
 ```mermaid
-flowchart LR
-  I[Intervals.icu] --> S[Sync and dated physiology]
-  S --> L[Execution ledger and intent overlays]
-  L --> M[Athlete model and signals]
-  A[Athlete goals and constraints] --> F[Focus and block compiler]
-  M --> F
-  M --> T[Today and Trends]
-  F --> G[Preview and publication gate]
-  G -->|Athlete accepts| I
-  L --> H[Block closeout and history]
-  H -. optional wording .-> AI[Anthropic]
-  T -. optional ride note .-> AI
+flowchart TD
+  ICU[Intervals.icu: rides, wellness, physiology] --> SYNC[Sync and dated physiology]
+  SYNC --> SCORE[Execution scoring]
+  NOTE[Athlete ride notes] --> INTENT[Intent parser and lap grading]
+  SYNC --> INTENT
+  SCORE --> LEDGER[Frozen past ledger]
+  INTENT --> OVERLAY[Separate intent overlays]
+  LEDGER --> MODEL[Athlete model]
+  OVERLAY --> MODEL
+  MODEL --> DAILY[Today and Trends]
+  GOALS[Goals, constraints, block history] --> FOCUS[Focus and recovery selection]
+  MODEL --> FOCUS
+  FOCUS --> COMPILER[Block compiler and publication gate]
+  SYNC --> COMPILER
+  COMPILER -->|Athlete accepts| WRITE[Write block and calendar events]
+  WRITE --> ICU
 ```
 
-`lib/` contains engines and persistence adapters; `app/api/` orchestrates IO; pages and
-`components/` present the results. JSON in `data/` is runtime state. Markdown in `knowledge-base/`
-is personal reference/history, not compiler authority. Both runtime directories are gitignored.
+| Boundary | What crosses it |
+|---|---|
+| `app/api/` → `lib/` | Routes read stores, resolve inputs, invoke engines, and persist results |
+| Stores → UI | `GET /api/sync` supplies shared state; page-specific routes supply the rest |
+| Engine → Anthropic | Precomputed ride/closeout facts for optional language; no plan composition |
+| Closeout → history | Execution evidence and optional reflections; reflections do not feed the compiler |
 
 ## I need to…
 
-| Task | Read | Start in code |
+Start with the relevant row, then inspect its callers/tests. [FILE_INDEX](FILE_INDEX.md) is the
+module lookup; it is not a prerequisite reading list.
+
+| Observed result / change | Trace in code | System reference |
 |---|---|---|
-| Understand sync, storage, backup, or physiology | [01 · Data](systems/01-sync-and-data.md) | `app/api/sync/route.ts`, `lib/json-store.ts`, `lib/physiology.ts` |
-| Change execution scoring, intent, or learning | [02 · Evidence](systems/02-scoring-and-learning.md) | `lib/execution-score.ts`, `lib/intent-scoring.ts`, `lib/athlete-model.ts` |
-| Change Today, readiness, or a morning decision | [03 · Daily loop](systems/03-daily-loop.md) | `components/dashboard/today.tsx`, `lib/athlete-state.ts` |
-| Change reference notes or retrospective records | [04 · Knowledge](systems/04-knowledge.md) | `lib/kb-loader.ts`, `lib/block-closeout.ts` |
-| Understand focus selection or season outlook | [05 · Season](systems/05-season.md) | `lib/season.ts`, `lib/season-signals.ts` |
-| Debug or change a generated block or publication | [06 · Generation](systems/06-generation.md) | `lib/block-compiler.ts`, `lib/publication-gate.ts`, `app/api/write/route.ts` |
-| Change an AI language path | [07 · AI](systems/07-ai-layer.md) | `lib/anthropic-prompts.ts`, `lib/anthropic-api.ts` |
-| Change a page or interaction | [08 · Frontend](systems/08-frontend.md), [DESIGN](../DESIGN.md) | `components/ui.tsx`, relevant page/component |
-| Change nutrition or explain its uncertainty | [09 · Nutrition](systems/09-nutrition.md) | `lib/nutrition.ts` |
-| Follow a change procedure | [Recipes](RECIPES.md) | Then read the relevant implementation and tests |
-| Find a module or route | [File index](FILE_INDEX.md) | `rg --files lib app/api components` for the current inventory |
-| Decode a term / understand a constraint | [Glossary](GLOSSARY.md), [Invariants](INVARIANTS.md) | Read only the relevant contracts |
-| Understand a decision or old review | [Decisions](DECISIONS.md), [History](history/README.md) | Follow a named reference; do not read the archive as onboarding |
-| Choose the next task | [Roadmap](../ROADMAP.md#follow-this-queue) | Verify current git/PR state before advancing it |
+| Sync is stale, a zone changed, or a store looks wrong | `app/api/sync/route.ts` → `physiology.ts`, `json-store.ts` | [01 · Data](systems/01-sync-and-data.md) |
+| A ride's score or stated intent looks wrong | `execution-score.ts` / `intent-scoring.ts` → `score-log.ts` / overlays → `athlete-model.ts` | [02 · Scoring](systems/02-scoring-and-learning.md) |
+| Today's readiness, suggested ride, or morning override | `athlete-state.ts`, `session-suggestion.ts`, `morning-check.ts` → `dashboard/today.tsx` | [03 · Daily loop](systems/03-daily-loop.md) |
+| A retrospective or editable knowledge file | `api/retrospective` → `block-closeout.ts`, `kb-loader.ts` | [04 · Knowledge](systems/04-knowledge.md) |
+| Why this training focus or season projection? | `season-signals.ts` → `season.ts` | [05 · Season](systems/05-season.md) |
+| Wrong session/duration, rejected preview, or publication failure | `api/generate` → `block-skeleton.ts` → `block-compiler.ts` → `publication-gate.ts` → `api/write` | [06 · Generation](systems/06-generation.md) |
+| Wrong AI wording or cost | `anthropic-prompts.ts` → `anthropic-api.ts`, `ai-usage.ts` | [07 · AI](systems/07-ai-layer.md) |
+| A page, interaction, or stale client state | `app/` → page component → `SyncProvider.tsx` / route | [08 · Frontend](systems/08-frontend.md), [DESIGN](../DESIGN.md) |
+| Wrong calorie target, buffer, or calibration | `nutrition.ts`: `resolveNutritionModel` → `resolveBuffer` → `calculateDailyTarget` | [09 · Nutrition](systems/09-nutrition.md) |
+
+Bare engine filenames above are in `lib/`; UI files are in `components/`; `api/` means `app/api/`.
+Change procedures: [Recipes](RECIPES.md). Vocabulary: [Glossary](GLOSSARY.md).
 
 ## Session rituals
 
-**Open:** identify your checkout and its changes. Sync clean primary `main`; if dirty, preserve it
-and start from current `origin/main` through the task helper. Read the selected roadmap item (or
-the user's explicit task), its subsystem, and affected invariants. [Workflow](../WORKFLOW.md) owns
-commands and dirty-checkout recovery. [AGENTS](../AGENTS.md) owns operating safeguards.
-
-**Close:** verify the result, update the document that owns the changed fact, commit task-owned
-files, and finish through the helper. Record any unfinished scope in its tracker with a concrete
-next action. A local edit, open PR, and merged change are different states.
+1. Identify checkout, local changes, and integrated revision ([dirty-checkout procedure](../WORKFLOW.md#dirty-primary-checkout)).
+2. Read the task's system doc and relevant [invariants](INVARIANTS.md); inspect the actual inputs and consumers.
+3. Verify the result, update its owning doc below, and finish through [Workflow](../WORKFLOW.md#codex-workflow).
 
 ## Documentation ownership
 
-| Question | Canonical owner | Update when |
-|---|---|---|
-| What is this and how do I try it? | [README](../README.md) | Positioning, setup, or material limitations change |
-| What can I do in the app? | [Features](../FEATURES.md) | A capability or its boundary changes |
-| What should happen next? | [Roadmap](../ROADMAP.md) | Priority, status, or an entry gate changes |
-| What is the defect and its acceptance check? | [todo](../todo.md) | A reported defect is reproduced, fixed, or disproved |
-| How does it work / what can break? | Relevant [system doc](#i-need-to), [Invariants](INVARIANTS.md) | Contracts, data flow, or tradeoffs change |
-| How do we work here? | [AGENTS](../AGENTS.md) (policy), [Workflow](../WORKFLOW.md) (procedure) | Operating behavior changes; update helpers in the same task |
-| Why was a choice made? | [Decisions](DECISIONS.md) | A durable design decision is accepted or superseded |
-| What shipped / what did an investigation find? | [Shipment history](history/shipments.md), [historical evidence](history/README.md) | A task closes; record a short outcome and commit/PR |
+| Changed fact | Edit here |
+|---|---|
+| Product purpose or setup | [README](../README.md) |
+| User operation or material limit | [FEATURES](../FEATURES.md) |
+| Work order / prerequisite | [ROADMAP](../ROADMAP.md); defect acceptance lives in [todo](../todo.md) |
+| Data flow or subsystem behavior | Its system doc above; shared hard contracts in [INVARIANTS](INVARIANTS.md) |
+| Operating rule / command procedure | [AGENTS](../AGENTS.md) / [WORKFLOW](../WORKFLOW.md), with affected helpers |
+| Durable decision / shipped result | [DECISIONS](DECISIONS.md) / [shipment history](history/shipments.md) |
 
-Keep one owner per fact; other documents link to it. Do not cache module counts, line counts, or
-importer counts. A new document needs a distinct question and an inbound link. Historical checklists
-and old handoffs never override current policy or activate work.
+Link to the owner instead of copying its explanation. Use a table for independent rules and a diagram
+for data flow; retain prose where it explains a tradeoff. Keep stable IDs and code pointers. Derive
+file counts and callers from source rather than documenting snapshots.
 
 ## The full doc set (one question each)
 
-The tables above are the live map. Additional references: [UX principles](../UX-CONSTITUTION.md)
-(used with DESIGN), [app rules](../app/README.md), [engine rules](../lib/README.md),
-[component rules](../components/README.md), and [KB defaults](../knowledge-base-defaults/README.md).
-[Agent workflow adapters](agents/issue-tracker.md) connect skills to the existing trackers.
-[History](history/README.md) indexes reviews, specs, execution plans, research, and old UX work.
-`CONTINUE.md` is a requested session handoff, not project status.
+The live map is above. Conditional references: [UX principles](../UX-CONSTITUTION.md),
+[folder rules](../lib/README.md), [agent tracker adapter](agents/issue-tracker.md).
+[History](history/README.md) indexes old reviews, specs, plans, and research. Open it for a named
+question; an old checklist or `CONTINUE.md` handoff does not select today's work.
 
 ## For AI agents
 
-Use progressive lookup: this router → one subsystem → its source and tests. Search more widely
-only when the dependency or behavior calls for it. Preserve `// AI:` links and stable historical
-handles when editing. Before declaring a claim shipped, check integrated source; before declaring
-it effective, require the relevant real-use evidence.
+Trace a disputed claim to code, not another document. Pay particular attention to **stored vs used**
+(reflections, directives), **planned vs ridden** (season exposure), and **deterministic vs provider-independent**
+(Today finalization). Those distinctions have already drifted in these docs.

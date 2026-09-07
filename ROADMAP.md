@@ -1,6 +1,6 @@
 # NodeVelo roadmap
 
-*Last reconciled 2026-09-07 against integrated `a383f5b`, open PR #109, and the September reviews.*
+*Checked 2026-09-07 against integrated `c365897` and open PR #109. Existing queue order retained.*
 
 ## Follow this queue
 
@@ -18,35 +18,24 @@ and [decision log](docs/DECISIONS.md) still govern product scope.
 | 5 | **Small reliability backlog, one fix at a time:** MA-3 tracing → SR-3 local date → MA-2/SR-4 request validation → SR-5 backup-test synchronization. | Each finding has a regression/evidence check and is archived on shipment. No combined cleanup PR. |
 | 6 | **FR-7**, then **FR-8**, only when their existing entry gates clear. | See package exits below. Do not pre-plan either while earlier work is open. |
 
-The September 2 review's P1 reports were missing from the September 5 punch-list. Their affected
-branches remain in current source; they outrank FR-6. They are queued for targeted reproduction,
-not claimed as newly live-verified failures. [Source review](docs/reviews/2026-09-02-code-and-app-state-review.md).
+P1 reports are queued for reproduction, not claimed as newly live-verified failures.
+[Evidence/dispositions](docs/reviews/README.md) · [Defect acceptance](todo.md)
 
-**The only parallel activity is normal riding and FR-9 evidence recording.** It is not a second
-implementation task. No new broad audits, provider-expansion research, speculative refactors, or
-future-phase planning while the current row remains open. Newly demonstrated P1 failures can interrupt;
-other ideas go to todo or the deferred list and do not reorder the queue automatically.
-
-**When a task ends:** merge or record why it was disproved/blocked; update its owning tracker; then
-advance one row. If FR-6 needs credentials or owner scoring, record that exact blocker and move to
-row 5 without pretending Phase 3 is closed. Keep one pending owner decision, not multiple experiments.
+During the freeze, normal riding and FR-9 recording are the only default parallel lane. Newly
+demonstrated P1 failures may interrupt; other ideas do not reorder the queue. At task end, record
+merged/disproved/blocked status and advance. If FR-6 needs credentials or owner scoring, state the
+blocker and continue at row 5 without marking Phase 3 complete.
 
 ## State of the app
 
-NodeVelo is a working personal cycling decision-support app under a feature freeze. Deterministic
-training-block generation, publication validation, restore safeguards, the selected early-closeout
-correction, and the MA-1 intent retry fix are shipped. That does not establish coaching effectiveness.
-[Shipped records](ARCHIVE.md) are reference material, not work to restart.
-
-Only **PR #109** was open at reconciliation; **#91 is closed**, **#110 is merged**, and the agent-skill
-streamlining in **#111 is merged**. Local primary edits remain unshipped and must not be confused with
-those commits. Numerous old worktrees are historical checkout residue, not independent obligations.
+Deterministic compilation, publication checks, restore safeguards, the early-closeout correction,
+and intent retries are shipped. PR #113 aligned docs and helpers. PR #109 remains unfinished;
+primary-checkout residue remains separate. [Shipment history](docs/history/shipments.md)
 
 ## Which records should I follow?
 
-This queue owns priority; [todo](todo.md) owns defect acceptance; [review dispositions](docs/reviews/README.md)
-and [history](docs/history/README.md) route evidence. Local research, old plans, and handoffs do not
-activate work. Product scope remains governed by the accepted charter and decision log.
+ROADMAP owns order, todo owns defect acceptance, and reviews provide dated evidence. Old plans,
+local research, and handoffs do not activate work. The accepted charter and decisions govern scope.
 
 ## Freeze implementation-plan queue
 
@@ -74,7 +63,14 @@ live smoke evidence. No provider expansion just to avoid closing the current com
 #### FR-7 · Manual curated-library completion — BLOCKED until Phase 3 closes
 
 Storage/services/routes exist; the complete curate → reuse → provenance → accepted-use loop does not.
-Plan that narrow loop only after FR-6 closes. No automatic promotion or historical bootstrapping.
+Individual-workout export to Intervals.icu exists through `workout-library-export.ts`; generator reuse
+and the complete user workflow remain unfinished. Plan that narrow loop after FR-6 closes. Automatic
+promotion and historical bootstrapping remain deferred.
+
+**Integration direction (owner request, 2026-09-07):** consider publishing an accepted block as a reusable
+Intervals.icu training plan, alongside individual library workouts. Current publication creates calendar
+events. Whole-plan export has no implementation or acceptance contract yet; it does not expand FR-7 or
+change the freeze order.
 
 ### Phase 5 · Validate nutrition prospectively
 

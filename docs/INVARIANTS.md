@@ -50,10 +50,9 @@ The contracts that hold NodeVelo together. Some are enforced by code/tests, some
 26. **ROADMAP IDs (#1–4, §5–7, Track A–C) are stable handles** — append, never renumber; "decided against" records survive trims.
 27. **`docs/superpowers/plans/` are immutable**; specs get a `Status:` stamp when shipped.
 28. **CONTINUE.md is written only by `/handoff`.**
-29. **`main` is integration-only.** Claude and Codex implementation tasks use fresh disposable
-    worktrees on namespaced branches. Each task stages only its own files and finishes through
-    `npm run finish:agent-task`; failed checks and merge conflicts are never bypassed or resolved by
-    discarding one side.
+29. **`main` is integration-only.** Codex tasks use isolated `codex/*` worktrees, stage only their
+    own files, and finish through `npm run finish:agent-task`. Required checks and deliberate conflict
+    resolution remain mandatory; [AGENTS](../AGENTS.md) owns the current agent policy.
 30. **Test fixtures avoid .x5 float boundaries** — pre-rounding values sitting on a boundary flip under IEEE arithmetic.
 31. **Markdown anchors are load-bearing.** COMPASS/FILE_INDEX/RECIPES link to `##` headings by slug — renaming a linked heading breaks inbound links silently; grep for the old slug before renaming.
 

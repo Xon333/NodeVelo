@@ -162,6 +162,10 @@ Why NodeVelo is built the way it is — standing architectural decisions in one 
 
 ---
 
+**Superseded workflow (owner decision; integrated in PR #113).** Codex is the active writer and
+integration authority. Reciprocal-review and user-override gates are retired; required GitHub checks
+remain. [AGENTS](../AGENTS.md) owns the current rule.
+
 ## ADR-0015 · The publication gate persists the verdict at generation time, and write matches it
 
 **Status.** Implemented 2026-08-23.

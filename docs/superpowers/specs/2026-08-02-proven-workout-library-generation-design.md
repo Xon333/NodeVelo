@@ -1,5 +1,11 @@
 # Proven workout library generation — Design
 
+> **Current applicability (2026-09-07):** this design predates FR-5. Its LLM workout-authoring,
+> repair pipeline, and generation-cost rationale are superseded by the deterministic compiler.
+> Manual curation, immutable reuse, provenance, and individual export inform the unfinished FR-7
+> scope. Read [current generation](../../systems/06-generation.md) and [ROADMAP](../../../ROADMAP.md)
+> before implementing; the historical instructions below are not a current execution plan.
+
 **Date:** 2026-08-02  
 **Status:** Design approved 2026-08-02; re-scoped 2026-08-05 (athlete decision) to defer automatic
 evidence-based promotion and the historical bootstrap — see §5a and §12. Corrected 2026-08-11 against a

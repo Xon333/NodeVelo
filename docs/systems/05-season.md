@@ -1,166 +1,91 @@
-# 05 · Season — which system to train next, and why
+# 05 · Season — choosing the next focus
 
-**Why this exists:** blocks generated in isolation drift into repetition or neglect; the season layer is the general "why" above each block's specific "what" — it picks the next focus from measured reality (what's actually been trained, what's decaying, what the goal demands) instead of a fixed rotation. **Where it sits:** consumes [02-scoring](02-scoring-and-learning.md)'s model + [04-knowledge](04-knowledge.md)'s goals; its focus choice and context feed [06-generation](06-generation.md). **Tradeoff:** the full event-anchored phase machinery is built but flag-gated off — the athlete chose block-level honesty over imposed macro-shapes.
-
-`lib/season.ts` (925 lines — the largest engine) + `lib/season-signals.ts` (its IO assembler). Surface: Plan page (`SeasonSection`, `SeasonRoadmap`), `/api/season`.
-
-## Two modes
-
-| | Rolling | Event-anchored |
-|---|---|---|
-| When | No upcoming A-priority event | An A-event exists |
-| Mechanism | Each block's focus chosen fresh by the **coverage selector** `chooseNextFocus` | `backwardScheduleFromEvent`: taper → peak → build backward from race day; `replanEventArc` re-plans on change |
-| Status | **Live** | Mechanism shipped, **feature-flagged off**: `SEASON_SHAPES_GENERATION = false` (2026-07-16 athlete decision) — season context still informs prompts, but phase shapes don't drive generation |
+`season-signals.ts` assembles inputs; `season.ts` selects focus and projects the season outlook.
+The generator consumes that selection. Profile goals are structured athlete data, not KB Markdown.
 
 ## The coverage selector
 
-`scoreFocusCandidates` ranks each focus by **goal-relevance × decay-urgency × trainability × execution-quality + limiter bonus**:
+```mermaid
+flowchart LR
+  G[Season objective, block goal, profile goals and weak points] --> INPUT[gatherFocusInputs]
+  H[Prescribed current and historical block days] --> INPUT
+  M[Athlete model and power-profile limiter] --> INPUT
+  INPUT --> R[scoreFocusCandidates]
+  R --> F[chooseNextFocus]
+  F --> C[Block compiler]
+  F --> P[Projected season outlook]
+```
 
-- *Goal relevance* — from goal/weakpoint text (`tagPresent`, negation-aware).
-- *Decay urgency* — how long since that system was actually trained, from **real session exposure** (`exposureFromSessions`), not planned intent.
-- *Execution quality* — the athlete's measured EWMA for that focus (`intervention.execFor` — the same accessor generation uses, so the two can't read different numbers).
-- *Limiter bonus* — the power-profile-derived weak system (`mapSystemToFocus`) biases, never overrides.
+| Signal | Meaning / limitation |
+|---|---|
+| Goal relevance | Matches goal/weakpoint text, with negation-aware tags |
+| Exposure / decay urgency | Uses prescribed block days up to today; skipped sessions can still count |
+| Trainability and execution quality | Modify candidate suitability; execution comes from per-type EWMA |
+| Limiter | Power-profile weak system biases selection; it does not replace the other inputs |
 
-`season-signals.gatherFocusInputs` is the **single place** these inputs are assembled, so `/api/generate` and `/api/season` cannot drift.
+`gatherFocusInputs` is shared by `/api/generate` and `/api/season`. The former includes the proposed
+block goal; the latter projects an outlook. `chooseNextFocus` selects the highest-ranked candidate
+other than the last focus; it does not simply take the unfiltered top score.
+
+## Two modes
+
+| Behavior | No upcoming A-event | Upcoming A-event |
+|---|---|---|
+| Season state | Settle existing history | Replan backward from the event |
+| Compiler focus | Rolling selector | Rolling selector |
+| Compiler phase | `build` | `build` while `SEASON_SHAPES_GENERATION = false` |
+| Event constraints | Existing events still enter the skeleton/gate | Existing events still enter the skeleton/gate |
+
+The flag gates event-phase/context shaping, not all event behavior. Event replanning can also filter
+recovery-week placement. See the actual inputs to `compileTrainingBlock` in `app/api/generate/route.ts`.
 
 ## Recovery weeks
 
-`planRecoveryWeeks` places deloads every 3–4 weeks based on `realWeeksSinceLastRecovery` — derived from actual ride history, not a cross-call counter (a stale counter was a shipped-bug class). Recovery-week hour targets come from `block-skeleton.ts` (retention % of loading weeks).
+`realWeeksSinceLastRecovery` reads actual ledger TSS against the athlete's weekly baseline.
+`planRecoveryWeeks` schedules the next deloads; `block-skeleton.ts` owns their hour targets.
+This uses ridden load, unlike the prescribed-session exposure signal above.
 
 ## Validators (post-generation, publication-gated)
 
-`validateBlockFocus` / `validatePrimaryQualityCadence` (rolling) or `validateSeasonFit` / `validateFocusMatch` (event-anchored) check the generated block agrees with the chosen focus/arc. The publication gate classifies these season-fit findings as preferences requiring explicit acknowledgment before write. They only run if the season re-plan succeeded; season context assembly in `/api/generate` is try/catch-wrapped — best-effort, never blocks generation.
+Rolling focus/cadence checks and event-mode fit checks belong to the [publication gate](06-generation.md#the-publication-gate).
+With the phase flag off, generation supplies rolling season context even if an A-event exists.
+Season replanning is best-effort; its failure becomes a warning, not an exemption from other validators.
 
 ## Persistence rules
 
-`data/season-plan.json`. `/api/generate` persists a season re-plan **only after a successful generation**, CAS-guarded on `updatedAt` (HR-58). `/api/season` PUT owns objective/events CRUD. `settleSeasonHistory` reconciles past periods; `projectSeasonOutlook` powers the roadmap preview (stateless).
+| Operation | Stored result |
+|---|---|
+| `/api/season` PUT | Athlete objective and events |
+| Successful generation | Season replan in `season-plan.json`, guarded by `updatedAt` |
+| `projectSeasonOutlook` | Display projection; no accepted future block |
 
 ## Season → Plan-page conveniences
 
-`suggestedBlockWeeks` pre-fills the generator's length selector (2/4/6/8) by ceiling-rounding the current period's remaining weeks; `filterGoalsByFocus` narrows the goal-textarea pre-fill to goals tagged with the current focus plus `"general"`-tagged ones — both are overridable pre-fills, never locks. Once a block's `endDate` passes, the Today page proactively nudges "generate the next block" (`isBlockFinished`, a pure date check) instead of sitting on stale copy.
+`suggestedBlockWeeks` and `filterGoalsByFocus` prefill the generator. The athlete can edit both.
+The outlook does not publish calendar events or lock future training choices.
 
 ## Known rough edges
 
-Open action items live in [ROADMAP.md](../../ROADMAP.md) (Phase 8 and stable handles) — this section
-is the *why* behind them. `SEASON_SHAPES_GENERATION` rollout decision record:
-`docs/superpowers/specs/2026-07-17-season-architecture-redesign-design.md`.
+| Boundary | Consequence / disposition |
+|---|---|
+| **P7: no pre-app exposure** | A system absent from NodeVelo block history gets elevated urgency, even if trained before app use. Goal-driven selection can mask this; it does not solve it. |
+| **Prescribed is not ridden** | Exposure can count skipped sessions. Execution quality only partly compensates. Join against actual evidence only when a demonstrated selection error justifies it. |
+| **Event taper coverage** | Standalone quality and embedded hard efforts are not treated identically by every validator; event-date exclusions remain priority-blind. Real A-event work is FR-11. |
+| **Goal prefill** | A season refetch can overwrite an in-progress generator goal edit. |
+| **Event display** | Peak/taper share `sharpen`; multiple A-events lack a dedicated ambiguity warning. |
 
-#### The 2026-07-24 redesign's open items (P1–P7)
+The old P2/P3 composition failures led to the deterministic skeleton and compiler, now shipped
+([generation](06-generation.md), [FR-5 evidence](../reviews/2026-08-29-fr5-acceptance.md)). Removed LLM
+critics, prompt retries, and interval-authoring paths are not future work.
 
-Root cause, full per-item detail, live-smoke results, and the 11-candidate re-architecture
-evaluation → [ARCHIVE.md](../../ARCHIVE.md) "Block-generation architecture redesign — P1–P7
-(2026-07-24)". What's still open, and why:
-
-- **P1 — A-priority events get no phase text.** `formatSeasonContext` is the only channel for the
-  backward-scheduled taper arc, and it stays behind `SEASON_SHAPES_GENERATION` by design — latent
-  since no A-event exists yet.
-- **P2 — generation may still miss an hour target, but it cannot publish that miss.** Historical
-  live smoke found a loading week ~9% under 12h and recovery weeks from 12min under to 1.5h over.
-  The deterministic skeleton now sets exact nominal totals, and `validateWeekHours` classifies any
-  post-generation miss as a publication blocker.
-- **P3c — RESOLVED 2026-08.** The narrative critic was removed after it inconsistently corrected one
-  overview but missed a "4-hour" mis-description of a 200-minute ride. `lib/overview-check.ts` now
-  compares overview duration and quality-type claims with extracted schedule facts, appends warnings,
-  and never rewrites prose.
-- **P3d — consequence forecast.** Deliberately not built: needs new forward-projection code
-  (`lib/readiness.ts`'s `computeAcwr`/`computeLoadRamp` only analyze past activity; nothing projects
-  CTL/ATL/TSB forward from a hypothetical block) and no live smoke run has yet shown a dangerous
-  ramp-rate or bad event-day form to justify it.
-- **P3e — aggregate-miss hard-fail + targeted single-week regeneration.** Deliberately not built:
-  the largest, riskiest piece (new partial-regen prompt/schema/splicing/bounded-retry, ~doubling
-  worst-case latency when it fires, a new boundary-conflict failure mode of its own). Recommended as
-  its own dedicated session once real data shows blocks still miss badly enough to need it — smoke
-  tests so far have only produced modest (≤1.5h) misses.
-- **P4/P5 — the event week can still overstack, and a hard ride can still land the day before the
-  event.** Live-confirmed after P5 shipped: the KOM event's own week stacked 3 quality sessions and
-  a hard embedded-effort Z2 landed the day immediately before the event — `validateEventTaper`'s
-  "no quality in the final 2 days" rule checks standalone quality types only, not embedded-effort
-  endurance rides the way `validateSchedule`'s older, broader "hard day" definition already does.
-  Worth extending `validateEventTaper` to reuse that broader definition if this recurs.
-- **P6 — week-boundary re-anchoring.** Not yet scoped to file/function detail. Recompute the
-  remaining weeks' skeleton from actual executed load at each week rollover — drops the feedback
-  loop from 42 days to 7 without a daily engine. Carries the per-zone progression ledger as state.
-- **P7 — the focus selector's urgency signal is blind to pre-app fitness.** `exposureFromSessions`
-  (`lib/season-signals.ts:76`) is built only from NodeVelo-generated block history. A focus with no
-  in-app exposure hits `NEVER_SEEN_URGENCY` (1.3), and for `aerobic-base` specifically that spike
-  can still win a goal-neutral block's slot. Heavily masked in practice (goal-driven blocks
-  out-score it) but not structurally closed. Fix direction: feed `aerobic-base`'s urgency partly
-  from a real, ledger-independent signal (synced CTL/volume-baseline trend) instead of the flat
-  spike.
-
-#### Decision log (full evaluations in ARCHIVE.md)
-
-- **Tripwire:** if a future block reproduces a structural defect (a missed hour target, a missing
-  limiter session, an overview contradiction the deterministic check misses), that's real evidence
-  the LLM
-  shouldn't author structure at all — next step would be a fully deterministic skeleton with
-  parameterized protocol templates, LLM narrating only.
-  **Fired 2026-07-29, and the response has now SHIPPED.** A reviewed 2-week block's "recovery" week
-  cut volume ~19% against a mandated ~40% AND kept all three quality types (SIT, Threshold, and a long
-  ride with embedded threshold efforts), each merely trimmed. Root causes were a volume-only recovery
-  instruction and a block-scoped durability template with no recovery carve-out — both fixed in
-  **Phase A** ([plan](../superpowers/plans/2026-07-29-block-generation-phase-a-correctness.md)),
-  live-verified the same day: the recovery week landed 7.0h against 11.2h loading (a 38% cut), one
-  quality session, other types dropped entirely, long ride unbroken despite template B being selected.
-  **Phase B** ([plan](../superpowers/plans/2026-07-29-block-generation-phase-b-skeleton.md)) then
-  built the deterministic skeleton the tripwire called for — see
-  [06-generation.md § The week skeleton](06-generation.md#the-week-skeleton-composition-authority).
-  Note what did NOT happen: the LLM still authors interval prescriptions, exact durations inside each
-  slot's envelope, and all prose. The tripwire's "LLM narrating only" was deliberately not taken that
-  far — composition is where it was wrong; content is where it was right.
-  **External datapoint (2026-07-30, not a reason to act yet):** a competitor analysis (Stride) found a
-  commercial platform that quarantines content authoring too — its planner *selects* from a workout
-  library and explicitly "does not design brand-new workout structures", with step authoring confined
-  to a separate one-workout-at-a-time tool under human review. That's the other half of the tripwire,
-  chosen independently. It is a design preference, not evidence against ours, so it changes nothing on
-  its own. **Reopen trigger:** if the publication gate's protocol blockers (`findings.blockers`,
-  fed by `workout-validate`) keep firing on generated intervals once the
-  skeleton has a few more blocks behind it, invert `workout-validate`'s KB bands into template
-  *constructors* (the shape `durability.ts` already uses) and have the LLM emit a template id + params.
-  Until that evidence exists, content authoring stays with the model.
-- **Held for a scheduled reopen, not rejected:** the TrainerRoad-style per-zone progression-level
-  state machine (→ ARCHIVE for why it's the standout alternative). Reopen once per-type observation
-  counts clear the athlete-model's own ≥3-obs gates (watch after the 2026-08-12 verdict
-  maturation).
-- **Eliminated outright (don't re-propose without a real reason):** a full constraint solver (its
-  one good idea — refuse to silently arbitrate an over-constrained ask — is already in P2a); full
-  rolling-horizon generation with no block concept; a full backward-from-event planner as the
-  *primary* generative move (→ ARCHIVE for the full evaluation).
-
-#### Other known edge cases (none currently worth a dedicated pass)
-
-- Event-mode peak vs. taper share one `focus: "sharpen"` value → same roadmap color/label; only
-  the phase caption distinguishes them. Cosmetic; visible only once event mode activates.
-- `exposureFromSessions` measures generated (prescribed) sessions, not ridden ones — a
-  planned-but-skipped VO2max day still counts as real exposure. `execQualityByFocus` only
-  partially compensates. Worth a join against the score log if this ever mis-steers the selector
-  in practice.
-- No re-plan trigger from the Season form itself (the next `POST /api/generate` re-plans and
-  activates event mode the moment a future A-event exists); no UI warning about multiple A-events
-  or the array-order tie-break.
-- **The `PlanView` goal-textarea race (UXA-19, 2026-07-22, narrowed not eliminated → ARCHIVE.md):**
-  `seasonQuery`'s render-time sync block re-applies `goalPrefill` onto the goal textarea any time
-  the query result changes reference, with no check for whether the athlete has already started
-  editing. Saving the Season form bumps `seasonVersion` → a real refetch → a real trigger, so an
-  athlete who saves Season while mid-edit on the goal textarea below it can still get overwritten —
-  same shape as before, one specific trigger instead of a timing race. Judgment call, not a bug:
-  decide whether the sync should also skip once the textarea has unsaved user edits, or whether
-  this is rare enough (same page, two adjacent actions) to leave as-is.
-- B/C-priority event surfacing (`formatUpcomingEventsForBlock`) and `formatSeasonContext`'s call
-  currently share one `try`/`catch` in `app/api/generate/route.ts` — if
-  `chooseNextFocus`/`replanEventArc`/`settleSeasonHistory` itself ever throws, the
-  (currently-disabled anyway) phase text AND the always-on event line are silently dropped
-  together. Pre-existing fragility inherited from the original event-surfacing plan's own
-  "best-effort" design. Worth unwinding (pull the event-line computation out of the replan's
-  try/catch) if event-surfacing reliability ever matters more than it does today.
-
-#### Splitting warning
-
-`season.ts` carries four concerns side by side (coverage selector, event backward-scheduling, validators, prompt formatters) — a natural 4-way split if it grows further. Don't extract partially; the validators and formatters share internal helpers with the selectors.
+Retained decisions: full constraint solver and blockless rolling-horizon replacement rejected;
+per-zone progression and weekly re-anchoring remain evidence-gated. [ROADMAP](../../ROADMAP.md) owns
+reopen triggers; [shipment history](../history/shipments.md) preserves the old evaluations.
 
 ## Common modifications
 
-| Change | Where |
+| Change | Start here |
 |---|---|
-| Focus selection weights | `season.ts` — `scoreFocusCandidates` |
-| New focus input | `season-signals.ts` |
+| Ranking / new signal | `scoreFocusCandidates` / `gatherFocusInputs` |
+| Event behavior | `replanEventArc`, generator phase flag, skeleton and gate inputs |
+| Deload timing | `realWeeksSinceLastRecovery`, `planRecoveryWeeks` |
