@@ -85,9 +85,7 @@ are enough to fail this run; passing it later will still require blind human rev
 
 ## Blind review
 
-`blind-review.json` is an empty array because the runner only exports outputs from a candidate that
-passes every hard gate across the complete category matrix. Neither Anthropic model passed, and the
-external candidates did not run. There is therefore nothing valid to score yet; the empty artifact is
+`blind-review.json` was an empty array at the recorded run: the original runner required a whole model to pass. MA-5 corrected that model-wide restriction on 2026-09-08: complete category arms may now come from different models, but an arm reaches review only if it participates in a complete selection passing the combined cost and validity gates. The recorded run still has no valid structured arm, and the external candidates did not run. There is therefore nothing valid to score yet; the empty artifact is
 not a favorable review.
 
 When a candidate clears the automated gates, the owner reviews opaque rows without provider/model
@@ -133,3 +131,14 @@ must never be mixed into one cost projection or comparison. To finish FR-6:
 
 Any external winner requires a separate minimal production-adapter plan and live smoke run. This
 experiment itself changes no production provider, model, provenance, route, or usage accounting.
+
+
+## Gate repairs and current blocker (2026-09-08)
+
+MA-4 and MA-5 were independently reproduced offline before repair. Missing or partial provider input/output usage now normalizes to unknown usage, keeps the conservative request reservation, and cannot produce a measured two-week projection or reach blind review. Normalization covers all four adapters. Category arms are evaluated independently; complete mixed-model selections must still cover all six cases with one model per category and pass the combined eleven-plus-two `$0.25` ceiling. A cheaper partial corpus cannot qualify.
+
+The current PR review was adjudicated once: both actionable findings were accepted and repaired; its remaining observations correctly identify incomplete credentials, owner scoring, and category decisions. Historical Ox-review language is superseded by the current workflow. The fixed v1 protocol, prompts, caps, model set and existing raw matrix remain unchanged. These gate repairs do not justify provider expansion or a production change.
+
+A separate live Anthropic adapter smoke returned a complete measured response (613 input / 241 output tokens, `$0.005454`). The actual output was inspected: its `85%` and `15W` claims failed the grounding screen. This confirms usage normalization, not a candidate win. It is recorded as `ma4-adapter-smoke.json` beside the original evidence and excluded from comparison results; total recorded matrix plus smoke spend is `$0.054916`.
+
+Only the Anthropic credential is currently available. OpenAI, Google and Mistral arms cannot run yet; no complete valid selection is available for blind scoring. FR-6 remains blocked on those credentials, valid comparison evidence, and owner usefulness/keep-switch-retire decisions. Integrating the repaired harness does not close Phase 3. Continue the roadmap's small reliability backlog while these inputs are unavailable; FR-7 remains blocked.

@@ -879,6 +879,14 @@ export function estimateExperimentCost(
   ) / 1_000_000;
 }
 
+function hasMeasuredUsage(result: ExperimentResult): boolean {
+  const usage = result.usage;
+  return usage.totalTokens > 0 &&
+    usage.inputTokens + usage.cachedInputTokens + usage.cacheWriteTokens > 0 &&
+    usage.outputTokens + usage.reasoningTokens > 0 &&
+    (!("costAccounting" in result) || result.costAccounting === "actual");
+}
+
 export function projectTwoWeekCost(
   results: ExperimentResult[],
   rideDays: number,
@@ -887,7 +895,7 @@ export function projectTwoWeekCost(
     const successful = results.filter(
       (result) => result.category === category && result.status === "ok",
     );
-    if (successful.length === 0) return Number.POSITIVE_INFINITY;
+    if (successful.length === 0 || successful.some((result) => !hasMeasuredUsage(result))) return Number.POSITIVE_INFINITY;
 
     return (
       successful.reduce((sum, result) => sum + result.costUsd, 0) /
@@ -911,27 +919,17 @@ export function evaluateHardGates(
   const expectedCases = new Map(
     FR6_CASES.map(({ id, category }) => [id, category]),
   );
-  const contexts = new Map<string, ExperimentResult[]>();
-  for (const result of results) {
-    const context = runKey(result.provider, result.model, "");
-    contexts.set(context, [...(contexts.get(context) ?? []), result]);
-  }
-  const corpusComplete =
-    contexts.size > 0 &&
-    [...contexts.values()].every((candidateResults) => {
-      if (candidateResults.length !== expectedCases.size) return false;
-      const seen = new Set<string>();
-      for (const result of candidateResults) {
-        if (
-          seen.has(result.caseId) ||
-          expectedCases.get(result.caseId) !== result.category
-        ) {
-          return false;
-        }
-        seen.add(result.caseId);
-      }
-      return seen.size === expectedCases.size;
-    });
+  // A selection contains one complete arm per category; its model may differ by category.
+  const seen = new Set<string>();
+  const categoryModels = new Map<LanguageCallCategory, string>();
+  const corpusComplete = results.length === expectedCases.size && results.every((result) => {
+    const model = runKey(result.provider, result.model, "");
+    if (seen.has(result.caseId) || expectedCases.get(result.caseId) !== result.category ||
+        (categoryModels.has(result.category) && categoryModels.get(result.category) !== model)) return false;
+    seen.add(result.caseId);
+    categoryModels.set(result.category, model);
+    return true;
+  });
   if (!corpusComplete) failures.push("corpus-incomplete");
 
   if (results.some((result) => result.status !== "ok")) {
@@ -987,17 +985,23 @@ export function resultsEligibleForBlindReview(
 ): ExperimentResult[] {
   const grouped = new Map<string, ExperimentResult[]>();
   for (const result of results) {
-    const key = runKey(result.provider, result.model, "");
+    const key = runKey(result.provider, result.model, result.category);
     grouped.set(key, [...(grouped.get(key) ?? []), result]);
   }
-  const eligible = new Set(
-    [...grouped.entries()]
-      .filter(([, candidateResults]) => evaluateHardGates(candidateResults).passed)
-      .map(([key]) => key),
-  );
-  return results.filter(
-    (result) => eligible.has(runKey(result.provider, result.model, "")),
-  );
+  const arms = (category: LanguageCallCategory) =>
+    [...grouped.values()].filter((rows) => rows[0]?.category === category);
+  const eligible = new Set<ExperimentResult>();
+  // Export an arm only if it participates in a complete, valid, budget-eligible selection.
+  // This allows mixed winners without presenting an independently cheap but unusable arm.
+  for (const rides of arms("ride-analysis")) {
+    for (const prose of arms("prose-retrospective")) {
+      for (const structured of arms("structured-retrospective")) {
+        const selection = [...rides, ...prose, ...structured];
+        if (evaluateHardGates(selection).passed) selection.forEach((row) => eligible.add(row));
+      }
+    }
+  }
+  return results.filter((result) => eligible.has(result));
 }
 
 /**

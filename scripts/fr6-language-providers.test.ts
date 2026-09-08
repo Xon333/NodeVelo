@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { accountExperimentResult, evaluateHardGates, resultsEligibleForBlindReview } from "./fr6-language-experiment";
 import { FR6_CASES } from "./fr6-language-fixtures";
 import {
   FR6_CANDIDATES,
@@ -667,5 +668,44 @@ describe("runProviderCase fetch timeout", () => {
     expect(result.output).toBe(`${provider === "openai" ? "OpenAI" : provider === "google" ? "Google" : "Mistral"} request failed.`);
     expect(result.output).not.toContain("secret timeout detail");
     expect(result.output).not.toContain("provider-test-key");
+  });
+});
+
+
+describe("MA-4 successful output with unmeasured usage", () => {
+  it.each([undefined, { input_tokens: 100 }, { output_tokens: 20 }])(
+    "blocks cost eligibility and reserves spend for usage %j", async (usage) => {
+      const rows = await Promise.all(FR6_CASES.map(async (fixture) => {
+        const content = fixture.schema === null
+          ? [{ type: "text", text: "The supplied evidence is limited." }]
+          : [{ type: "tool_use", name: "submit_reflections", input: JSON.parse(validStructuredOutput) }];
+        const result = await runProviderCase(candidate("anthropic"), fixture, {
+          env: { ANTHROPIC_API_KEY: "test-key" },
+          createAnthropicClient: () => ({ messages: { create: async () => ({ content, usage, stop_reason: "end_turn" }) } }),
+        });
+        expect(result.status).toBe("ok");
+        return accountExperimentResult(result, 0.1);
+      }));
+      expect(evaluateHardGates(rows).failures).toContain("projected-cost-unavailable");
+      expect(resultsEligibleForBlindReview(rows)).toEqual([]);
+      expect(rows.every((row) => row.costAccounting === "reserved-unknown" && row.accountedCostUsd === 0.1)).toBe(true);
+    },
+  );
+});
+
+
+describe("MA-4 external provider partial usage", () => {
+  it.each(["openai", "google", "mistral"] as const)("reserves %s spend when an output count is missing", async (provider) => {
+    const selected = candidate(provider);
+    const raw = provider === "openai"
+      ? { status: "completed", output_text: "Evidence is limited.", usage: { input_tokens: 100 } }
+      : provider === "google"
+        ? { candidates: [{ content: { parts: [{ text: "Evidence is limited." }] }, finishReason: "STOP" }], usageMetadata: { promptTokenCount: 100 } }
+        : { choices: [{ message: { content: "Evidence is limited." }, finish_reason: "stop" }], usage: { prompt_tokens: 100 } };
+    const result = await runProviderCase(selected, FR6_CASES[0]!, {
+      env: { [selected.credential]: "test-key" }, fetch: vi.fn(async () => jsonResponse(raw)),
+    });
+    expect(result.status).toBe("ok");
+    expect(accountExperimentResult(result, 0.1)).toMatchObject({ costAccounting: "reserved-unknown", accountedCostUsd: 0.1 });
   });
 });

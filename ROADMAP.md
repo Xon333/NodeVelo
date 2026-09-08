@@ -4,19 +4,18 @@
 
 ## Follow this queue
 
-**One active implementation task at a time. Start at row 1; do not choose among reviews.**
+**One active implementation task at a time. Start at row 1; skip its explicit external blocker as directed below. Do not choose among reviews.**
 This queue owns execution order. [todo.md](todo.md) owns defect details; reviews are dated evidence,
 not competing task lists. The [accepted freeze charter](docs/reviews/2026-08-20-nodevelo-adversarial-investment-review.md)
 and [decision log](docs/DECISIONS.md) still govern product scope.
 
 | Order | Work | Done when |
 |---:|---|---|
-| **1 — NOW** | **SR-2: verify and restore provider-independent ride finalization.** Repair is implemented; required integration checks are next. | A supported ride sync without an Anthropic key produces deterministic Today evidence and ledger enrichment; only optional prose depends on AI. |
-| 2 | **Finish the existing FR-6 work in PR #109.** Resolve MA-4/5 and adjudicate other review claims once, then complete the bounded comparison. | One consistent protocol, valid measured costs, owner usefulness review, and keep/switch/retire decisions for each of the three language categories; PR integrated or closed with an explicit disposition. |
-| 3 | **Small reliability backlog, one fix at a time:** MA-3 tracing → SR-3 local date → MA-2/SR-4 request validation → SR-5 backup-test synchronization. | Each finding has a regression/evidence check and is archived on shipment. No combined cleanup PR. |
-| 4 | **FR-7**, then **FR-8**, only when their existing entry gates clear. | See package exits below. Do not pre-plan either while earlier work is open. |
+| 1 — BLOCKED | **FR-6 comparison in PR #109.** MA-4/5 are repaired; integration checks are next. External credentials and owner scoring remain unavailable. | One consistent protocol, valid measured costs, owner usefulness review, and keep/switch/retire decisions for each of the three language categories; PR integrated or closed with an explicit disposition. |
+| **2 — NEXT** | **Small reliability backlog, one fix at a time:** MA-3 tracing → SR-3 local date → MA-2/SR-4 request validation → SR-5 backup-test synchronization. | Each finding has a regression/evidence check and is archived on shipment. No combined cleanup PR. |
+| 3 | **FR-7**, then **FR-8**, only when their existing entry gates clear. | See package exits below. Do not pre-plan either while earlier work is open. |
 
-SR-1 merged in [PR #116](https://github.com/Xon333/NodeVelo/pull/116); [shipment evidence](docs/history/shipments.md#sr-1--concurrent-publication-rollback-2026-09-08). SR-2 is reproduced and under repair on `codex/sr-2-provider-independent-today`; next action is required verification and integration.
+SR-1 merged in [PR #116](https://github.com/Xon333/NodeVelo/pull/116); [shipment evidence](docs/history/shipments.md#sr-1--concurrent-publication-rollback-2026-09-08). SR-2 merged in [PR #117](https://github.com/Xon333/NodeVelo/pull/117). FR-6 proceeds only when its missing inputs are available; meanwhile continue the reliability backlog in order.
 [Evidence/dispositions](docs/reviews/README.md) · [Defect acceptance](todo.md)
 
 During the freeze, normal riding and FR-9 recording are the only default parallel lane. Newly

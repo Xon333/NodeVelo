@@ -251,7 +251,7 @@ describe("blind review rows", () => {
       .toThrow("duplicate blind review ID");
   });
 
-  it("includes only complete candidates that pass every hard gate", () => {
+  it("includes only category arms participating in a complete passing selection", () => {
     const passing = completeResults({ ride: 0.01, prose: 0.01, structured: 0.01 });
     const truncated = completeResults({ ride: 0.01, prose: 0.01, structured: 0.01 })
       .map((row, index) => ({
@@ -283,7 +283,13 @@ describe("blind review rows", () => {
       ...schemaInvalid,
       ...unsupported,
       ...overBudget,
-    ])).toEqual(passing);
+    ])).toEqual([
+      ...passing,
+      ...truncated.filter((row) => row.category !== "ride-analysis"),
+      ...schemaInvalid.filter((row) => row.category !== "structured-retrospective"),
+      ...unsupported.filter((row) => row.category !== "ride-analysis"),
+      ...overBudget.filter((row) => row.category !== "ride-analysis"),
+    ]);
   });
 });
 
@@ -958,3 +964,22 @@ function payableResult(
     ? { ...value, costUsd: estimateExperimentCost(candidate.pricing, value.usage) }
     : value;
 }
+
+
+describe("MA-5 independent category selection", () => {
+  it("admits complementary category winners and gates their combined cost", () => {
+    const first = completeResults({ ride: 0.01, prose: 0.02, structured: 0.03 }).map((row) => ({
+      ...row, status: row.category === "structured-retrospective" ? "schema-invalid" as const : row.status,
+    }));
+    const second = completeResults({ ride: 0.01, prose: 0.02, structured: 0.03 }).map((row) => ({
+      ...row, provider: "openai" as const, model: "other", status: row.category !== "structured-retrospective" ? "request-failed" as const : row.status,
+    }));
+    const selected = [...first.filter((row) => row.category !== "structured-retrospective"), second[5]!];
+    expect(resultsEligibleForBlindReview([...first, ...second])).toEqual(selected);
+    expect(evaluateHardGates(selected)).toEqual({ passed: true, projectedCostUsd: 0.16, failures: [] });
+    expect(evaluateHardGates(selected.slice(1)).failures).toContain("corpus-incomplete");
+    const expensive = selected.map((row) => ({ ...row, costUsd: 0.03 }));
+    expect(evaluateHardGates(expensive).failures).toContain("projected-cost-exceeds-budget");
+    expect(resultsEligibleForBlindReview(expensive)).toEqual([]);
+  });
+});

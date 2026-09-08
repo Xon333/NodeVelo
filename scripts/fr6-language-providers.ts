@@ -485,7 +485,13 @@ function jsonSchema(fixture: Fr6ExperimentCase): Record<string, unknown> {
   return schema;
 }
 
+function hasTokenCounts(raw: Record<string, unknown>, ...keys: string[]): boolean {
+  return keys.every((key) => typeof raw[key] === "number" && Number.isSafeInteger(raw[key]) && (raw[key] as number) >= 0);
+}
+
 function normalizeAnthropicUsage(raw: Record<string, unknown>): ExperimentUsage {
+  // Missing/partial usage is unknown spend, never a measured zero-cost response.
+  if (!hasTokenCounts(raw, "input_tokens", "output_tokens")) return { ...ZERO_USAGE };
   const cached = numberOrZero(raw.cache_read_input_tokens);
   const write = numberOrZero(raw.cache_creation_input_tokens);
   const outputTotal = numberOrZero(raw.output_tokens);
@@ -496,6 +502,8 @@ function normalizeAnthropicUsage(raw: Record<string, unknown>): ExperimentUsage 
 }
 
 function normalizeOpenAiUsage(raw: Record<string, unknown>): ExperimentUsage {
+  // Missing/partial usage is unknown spend, never a measured zero-cost response.
+  if (!hasTokenCounts(raw, "input_tokens", "output_tokens")) return { ...ZERO_USAGE };
   const inputDetails = asRecord(raw.input_tokens_details);
   const outputDetails = asRecord(raw.output_tokens_details);
   const cached = numberOrZero(inputDetails.cached_tokens);
@@ -507,6 +515,8 @@ function normalizeOpenAiUsage(raw: Record<string, unknown>): ExperimentUsage {
 }
 
 function normalizeGoogleUsage(raw: Record<string, unknown>): ExperimentUsage {
+  // Missing/partial usage is unknown spend, never a measured zero-cost response.
+  if (!hasTokenCounts(raw, "promptTokenCount", "candidatesTokenCount")) return { ...ZERO_USAGE };
   const cached = numberOrZero(raw.cachedContentTokenCount);
   const input = Math.max(0, numberOrZero(raw.promptTokenCount) - cached);
   return usage(
@@ -519,6 +529,8 @@ function normalizeGoogleUsage(raw: Record<string, unknown>): ExperimentUsage {
 }
 
 function normalizeMistralUsage(raw: Record<string, unknown>): ExperimentUsage {
+  // Missing/partial usage is unknown spend, never a measured zero-cost response.
+  if (!hasTokenCounts(raw, "prompt_tokens", "completion_tokens")) return { ...ZERO_USAGE };
   const cached = numberOrZero(asRecord(raw.prompt_tokens_details).cached_tokens);
   const input = Math.max(0, numberOrZero(raw.prompt_tokens) - cached);
   const reasoning = numberOrZero(asRecord(raw.completion_tokens_details).reasoning_tokens);
