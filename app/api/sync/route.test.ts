@@ -1310,8 +1310,26 @@ describe("POST /api/sync — today-ride analysis path", () => {
     expect(scoreEntries.find((e) => e.date === TODAY)?.executionScore).toBe(json.todayAnalysis.executionScore);
   });
 
-  it("persists the interval-adherence stamp alongside the today-patch's executionScore (SIT-bug fix)", async () => {
-    seedTodayRide(); // mkBlock's Threshold day parses to a non-empty 3x12m@95% prescription
+  it.each(["Ride", "VirtualRide"] as const)("SR-2 finalizes a %s without Anthropic configuration", async (type) => {
+    seedTodayRide();
+    vi.mocked(anthropic.isAnthropicConfigured).mockReturnValue(false);
+    vi.mocked(api.runFullSync).mockResolvedValue(
+      mkSync({ activities: [mkActivity({ type, carbsIngestedG: 77, movingTimeSec: 3600 })] })
+    );
+    const res = await postSync();
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.todayAnalysis?.activityDate).toBe(TODAY);
+    expect(store.writeTodayAnalysis).toHaveBeenCalledOnce();
+    expect(json.analysisPending).toBe(false);
+    expect(scoreEntries.find((e) => e.date === TODAY)?.executionScore).toBe(json.todayAnalysis.executionScore);
+    expect(scoreEntries.find((e) => e.date === TODAY)?.fuel).toEqual({ carbsGPerH: 77 });
+    expect(api.fetchPowerStream).toHaveBeenCalledWith("a1");
+  });
+
+  it.each([true, false])("persists interval adherence with Anthropic configured=%s (SIT-bug / SR-2)", async (configured) => {
+    seedTodayRide();
+    vi.mocked(anthropic.isAnthropicConfigured).mockReturnValue(configured); // mkBlock's Threshold day parses to a non-empty 3x12m@95% prescription
     // Genuine executed intervals matching the prescription (same shape as the birth-fetch tests'
     // fixture below for an identical Threshold 3x12 prescription) — fetchIntervals must resolve
     // non-empty here so matchPrescription produces a real, non-fabricated comparison. An empty
