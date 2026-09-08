@@ -20,7 +20,6 @@ Only its current row is active. A review recommendation is not automatically an 
 was previously local-only and its P1 reports were missing here. Current source still contains the
 reported branches; targeted reproduction is the next action, not another broad audit.
 
-- ◑ P1 `bug` **SR-2** Reproduced missing Today evidence without Anthropic for Ride and VirtualRide. `codex/sr-2-provider-independent-today` removes the deterministic gate and gates only optional language readiness. Regression checks cover evidence, ledger score/fuel, and interval adherence without configuration. Next: required checks and integration, then archive.
 - ☐ P2 `bug` **SR-3** Carry local date through MorningCheckIn's post-change sync refresh; verify at a local/UTC boundary.
 - ☐ P2 `bug` **SR-4** Reject primitive retrospective JSON bodies before property/in-operator access; assert 400 with no writes.
 - ☐ P2 `audit` **SR-5** Replace scheduler-dependent backup-test polling with an explicit fake-filesystem handshake; retain restore/write concurrency assertions. Prior review observed suite-load failures; no new failure run claimed here.
@@ -35,8 +34,8 @@ immutable plans restored, and source-comment rationale retained.
 
 - ☐ P2 `bug` **MA-2** Reject null/primitive Profile section containers before property reads; current null nutrition/performance requests return 500.
 - ☐ P2 `audit` **MA-3** Exclude private runtime roots from production traces and add synthetic-canary build assertions (52 references reproduced).
-- ☐ P2 `bug` **MA-4** PR #109: unknown successful usage must not pass measured-cost gates as $0.
-- ☐ P2 `bug` **MA-5** PR #109: permit independent category winners, then gate their combined cost.
+- ◑ P2 `bug` **MA-4** PR #109: reproduced and repaired missing/partial successful usage; unknown spend stays reserved and blocks cost eligibility. Required integration checks are next.
+- ◑ P2 `bug` **MA-5** PR #109: reproduced and repaired independent category selection, with complete-corpus and combined-cost gates. Required integration checks are next.
 - ☐ P3 `edu` **MA-8** Remaining app metadata/status copy: verify it against deterministic authority. Documentation positioning, route/module counts, and verified stale spec stamps were reconciled in the navigation overhaul; preserve historical decisions.
 
 **Whole-repo hostile review (2026-08-15) — remaining decisions.** Closed findings HR-60…HR-65,
