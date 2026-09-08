@@ -1,6 +1,6 @@
 # Freeze-roadmap reconciliation design
 
-**Status:** Approved design
+**Status:** Shipped in PR #104 (`d20dde4`); execution order subsequently reconciled in PR #112. [ROADMAP](../../../ROADMAP.md) owns current order.
 **Date:** 2026-08-27
 **Master decision record:** [NodeVelo adversarial investment review](../../reviews/2026-08-20-nodevelo-adversarial-investment-review.md)
 

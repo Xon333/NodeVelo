@@ -10,15 +10,15 @@ flowchart TD
   ES --> LEDGER[(score-log.json — append-only ledger,\nfrozen FTP/calibration/fuel/form stamps)]
   LEDGER --> AM[athlete-model: per-type EWMA, trends, behaviour]
   AM --> INS[deriveInsights → ranked coaching insights]
-  INS --> GEN[next block generation directives]
-  GEN --> INT[intervention-log: baseline snapshotted]
+  INS --> GEN[Focus and durability inputs]
+  INS --> INT[Publication: intervention baseline recorded]
   INT -->|28-day horizon| VAL[validated / refuted / inconclusive → hit-rate]
-  VAL --> GEN
+  VAL --> GUIDE[Displayed guidance ranking]
   LEDGER --> CALIB[calibration: derive per-athlete parameters]
   CALIB --> ES
 ```
 
-## The scorer (`lib/execution-score.ts`, 368 lines)
+## The scorer (`lib/execution-score.ts`)
 
 `computeExecutionScore` grades **every** ride, planned or off-plan: interval adherence + duration compliance, intensity-vs-type IF bands (per-athlete offsets via calibration), the merged easy-ride HR+efficiency read, durability delivery (±2), off-plan aerobic quality, VI pacing, RPE-vs-intensity. Key exported distinction — three words that are not synonyms:
 
@@ -46,7 +46,7 @@ flowchart TD
 - **FTP-independent markers are the long-term backbone** (they survive FTP redefinition): Pw:HR/EF — deliberately like-for-like: **outdoor** rides only (indoor ERG flattens power:HR), steady endurance band, ≥45 min, VI within `AEROBIC_MAX_VI` (fail-closed when uncomputable); and the fueling/weight graph aggregates **complete weeks only** (an in-progress week's totals are misleadingly low).
 - **The model's numbers**: EWMA α = 0.35 (adaptive via calibration), trend = split-half mean comparison with an epsilon band, minimum 3 observations before any pattern fires.
 
-## The ledger (`lib/score-log.ts`, 411 lines)
+## The ledger (`lib/score-log.ts`)
 
 `buildRideScores` runs the scorer over the sync window and merges into `data/score-log.json` — **append-only**. Past entries are frozen with provenance stamps: FTP-used (`physiologyAsOf`), calibration values, fuel, NP-fallback, form state. Only today's entry keeps re-deriving until the day rolls over. Capped at 400 entries (~6 months). Two named invariants (**LEDGER-1**: a rebuild can never un-plan a frozen entry; **LEDGER-2**: append-only merge) are enforced by `mergeScoreLog` / `mergeScoreLogRebuild` — see [../INVARIANTS.md](../INVARIANTS.md). A one-shot destructive rebuild exists (`/api/sync` POST with `rebuildLedger: true`), guarded by `data/ledger-rebuild.json` (truthy check, not `=== null` — the migration-flag rule).
 
@@ -54,21 +54,26 @@ Dispositions modulate teaching, not scores: a "compromised" ride keeps its raw s
 
 ## The model (`lib/athlete-model.ts`)
 
-Rebuilt fresh from the whole ledger on demand: recency-weighted (EWMA, adaptive α from `calibration.autoEwmaAlpha`) per-type execution quality, trend, and behaviour summary → `deriveInsights` ranks coaching insights. Consumed by generation directives, season focus selection, Trends, and athlete state.
+Rebuilt fresh from the whole ledger on demand: recency-weighted (EWMA, adaptive α from `calibration.autoEwmaAlpha`) per-type execution quality, trend, and behaviour summary → `deriveInsights` ranks coaching insights. Consumed by season focus selection, durability selection, Trends, and athlete state. Synthesized prose directives and retrospective reflections are not compiler inputs.
 
 ## The validation loop (`lib/intervention.ts`)
 
-When an insight actually drives a generated block, `buildInterventions` snapshots a baseline (execution + physiology markers). After a 28-day maturation horizon, `validateInterventions` re-measures: validated / refuted / inconclusive. `summariseValidation` surfaces those counts per dimension on Model/Trends and **demotes** directives whose decisive record falls below the configured threshold (≤34% validated over ≥3 decisive blocks) in `lib/synthesis.ts` — shown as "try a different lever," evidence never hidden.
+At block publication, `buildInterventions` snapshots a baseline (execution + physiology markers). After a 28-day maturation horizon, `validateInterventions` re-measures: validated / refuted / inconclusive. `summariseValidation` surfaces those counts per dimension on Model/Trends and **demotes** directives whose decisive record falls below the configured threshold (≤34% validated over ≥3 decisive blocks) in `lib/synthesis.ts` — shown as "try a different lever," evidence never hidden.
 
-## Calibration (`lib/calibration.ts`, 533 lines)
+## Calibration (`lib/calibration.ts`)
 
-Replaces population magic numbers with athlete-derived values *only when honestly derivable*. The single precedence rule (`trustedCalibration`): **manual override > derived (if discriminating) > population default**. Derived values must separate failures from successes by a margin (`lib/correlation.ts` — `deriveExecutionEdge` finds where things break, `deriveOptimum` where they work); a non-discriminating signal falls back to the default rather than calibrating to habit. Currently calibrated: ACWR bands, TSB deep-fatigue edge, decoupling-good cutoff, carbs optimum, per-type IF-band offsets, durability-insert envelope, athlete-state weights. Import direction is one-way: `calibration → correlation`, never the reverse (cycle avoidance).
+Replaces population magic numbers with athlete-derived values *only when honestly derivable*. The single precedence rule (`trustedCalibration`): **manual override > derived (if discriminating) > population default**. Derived values must separate failures from successes by a margin (`lib/correlation.ts` — `deriveExecutionEdge` finds where things break, `deriveOptimum` where they work); a non-discriminating signal falls back to the default rather than calibrating to habit. Derived paths include EWMA responsiveness, the TSB deep-fatigue edge, decoupling cutoff, endurance-carb optimum, and zone-based IF offsets. ACWR bands, other TSB edges, durability envelopes, and athlete-state weights use defaults with manual overrides. Recording an intervention at publication does not prove it affected the compiler or caused an outcome. Import direction is one-way: `calibration → correlation`, never the reverse (cycle avoidance).
 
 ## Where each piece runs
 
 Scoring happens inside `POST /api/sync` (see [01-sync-and-data.md](01-sync-and-data.md)); the model/insights are computed on demand by `/api/trends`, `/api/generate`, `/api/write`; interventions are recorded at write time and validated at sync time. Block closeout (`lib/block-closeout.ts`, run inside `POST /api/retrospective`) consumes the frozen ledger **read-only** — its compliance figures are the ledger's already-capped values (INVARIANT 25), raw duration ratios only *detect* overshoot and never grade it — so a closeout can never re-derive or rewrite history.
 
 ## Known rough edges
+
+- **Intent retries preserve provider failures.** The intent runner opts into throwing interval-fetch
+  errors, so an HTTP outage writes no overlay and leaves the same note eligible for a later sync.
+  A successful response with no laps remains genuine missing evidence. The regression exercises the
+  real HTTP adapter: mocking only a rejected `fetchIntervals` call hid its default empty-array fallback.
 
 - **Phases 2b–2c shipped 2026-08-12.** A self-directed ride can now replace the ledger's
   generic off-plan verdict in derived state with a deterministic score against objectives recovered
@@ -220,6 +225,6 @@ Scoring happens inside `POST /api/sync` (see [01-sync-and-data.md](01-sync-and-d
 |---|---|---|
 | Scoring signal weights/bands | `execution-score.ts` | Frozen ledger entries must NOT be retro-scored; new logic applies to new entries only |
 | New calibratable parameter | `calibration.ts` (+ `correlation.ts` if a new derivation shape) | Route through `trustedCalibration`; keep the discrimination guard |
-| New insight type | `athlete-model.deriveInsights` | It only earns prompt space via `synthesis.ts`'s ranking |
+| New insight type | `athlete-model.deriveInsights` | Check its actual consumers; `synthesis.ts` ranks displayed guidance, not compiler instructions |
 | Ledger schema field | `score-log.ts` + `sync-ledger.backfillLedgerEntries` | Backfill must be idempotent; migration flags use truthy checks |
 | Test fixtures | — | Don't pin expectations whose pre-rounding value sits on a .x5 float boundary (known IEEE flip trap) |

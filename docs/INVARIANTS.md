@@ -50,10 +50,9 @@ The contracts that hold NodeVelo together. Some are enforced by code/tests, some
 26. **ROADMAP IDs (#1–4, §5–7, Track A–C) are stable handles** — append, never renumber; "decided against" records survive trims.
 27. **`docs/superpowers/plans/` are immutable**; specs get a `Status:` stamp when shipped.
 28. **CONTINUE.md is written only by `/handoff`.**
-29. **`main` is integration-only.** Claude and Codex implementation tasks use fresh disposable
-    worktrees on namespaced branches. Each task stages only its own files and finishes through
-    `npm run finish:agent-task`; failed checks and merge conflicts are never bypassed or resolved by
-    discarding one side.
+29. **`main` is integration-only.** Codex tasks use isolated `codex/*` worktrees, stage only their
+    own files, and finish through `npm run finish:agent-task`. Required checks and deliberate conflict
+    resolution remain mandatory; [AGENTS](../AGENTS.md) owns the current agent policy.
 30. **Test fixtures avoid .x5 float boundaries** — pre-rounding values sitting on a boundary flip under IEEE arithmetic.
 31. **Markdown anchors are load-bearing.** COMPASS/FILE_INDEX/RECIPES link to `##` headings by slug — renaming a linked heading breaks inbound links silently; grep for the old slug before renaming.
 
@@ -121,7 +120,7 @@ The contracts that hold NodeVelo together. Some are enforced by code/tests, some
 44. **Grounding is semantic and field-specific.** Zone tokens are masked out with printable text before
     any numeric scan, so the `4` in `Z4` can never ground `reps: 4`, nor the `5` in `Z5` ground
     `durationMin: 5`. Each field requires its own unit-bearing form. `verifyGrounding` may only lower
-    the model's claim and takes no FTP: grounding is about what the note says, not what a number
+    a stored interpretation's claim and takes no FTP: grounding is about what the note says, not what a number
     converts to.
 45. **Objective decomposition cannot move the score**, via four ordered canonicalisation stages:
     (1) drop exact semantic duplicates on `(kind, zone, zoneBasis, durationMin, watts, targetPctFtp,
@@ -132,19 +131,21 @@ The contracts that hold NodeVelo together. Some are enforced by code/tests, some
     target); (4) one clamped contribution per kind. Stage order is load-bearing: merging before
     deduping would make an exact duplicate sum as if it were distinct.
 46. **The athlete's stated `%FTP` is extracted; watts are derived.** `targetPctFtp` and `watts` are
-    separate target fields. The model emits whichever the note states and never converts — it is not
-    given FTP. `resolveTargetWatts` converts against the ledger row's `ftpUsed`; without a usable
+    separate target fields in legacy objective records. Preserve what the note stated without
+    converting during interpretation. The current labelled-segment parser emits duration/zone targets. `resolveTargetWatts` converts against the ledger row's `ftpUsed`; without a usable
     anchor the objective is ungraded rather than resolved against a guess.
 47. **A zone target is graded on the basis the athlete stated.** `zoneBasis` is `power`, `heart-rate`,
     or `unspecified`, reported from the note and never inferred from the zone number. An explicit basis
     never cross-falls-back: if its array is missing, the objective is ungraded. `unspecified` defaults
     to power, with HR fallback permitted for that basis only, and none at all indoors.
-48. **The intent parser is shown the note and ride duration — nothing else.** No decoupling, scores,
-    zone data, or FTP. The tool schema has no score, compliance, or drift field. Notes are capped at
-    the shared `INTENT_NOTE_MAX_CHARS` (2000) in both intent parsing and ride analysis; longer notes
-    get an explicit truncation marker.
-49. **A note-less ride is decided without an LLM call.** The empty-note branch precedes client
-    construction, and the empty note's fingerprint is stable so the ride is decided once.
+48. **Intent parsing receives the note alone.** `parseDeterministicIntent(note)` extracts supported
+    labelled bullets without scores, physiology, or ride metrics. The runner attaches ride/lap
+    evidence afterward for grading. There is no LLM tool schema. `ACTIVITY_NOTE_MAX_CHARS` (2000)
+    caps the note sent to optional ride-analysis language; the deterministic parser currently reads
+    the full note rather than sharing that truncation behavior.
+49. **An empty or unsupported note needs no remote call.** Empty notes produce a stable
+    `no-intent-found` record; unsupported grammar produces an untrusted deterministic interpretation.
+    The runner fetches Intervals.icu laps only after a supported parse. Intent never calls an LLM.
 50. **Overlay idempotency reads all records, not applicable ones, and transient call failures write
     nothing.** `needsParse` skips any unsuperseded `(activityId, noteFingerprint)` record, including
     `disabled` and `pending`. The runner reports transient failures in `failedIds`; the client echoes

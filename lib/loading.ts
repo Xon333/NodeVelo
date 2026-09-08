@@ -69,7 +69,7 @@ const HELPS_MARGIN = 0.25; // loaded delivery rate must beat unloaded by ≥ thi
 const NO_EFFECT_MIN_PER_SIDE = 5; // don't declare futility on a thin sample
 const NO_EFFECT_BAND = 0.1; // at n≥5/side, a diff below this (incl. negative) = loading isn't moving the signal
 
-// ponytail: heuristic delivered-rate comparison, not the correlation engine — loaded/skipped is binary,
+// heuristic delivered-rate comparison, not the correlation engine — loaded/skipped is binary,
 // deriveOptimum/deriveExecutionEdge need a continuous signal. Migrate onto a correlation-engine spec
 // when actual day-before grams (not just the flag) are logged.
 export function assessLoadingEffect(entries: RideScoreEntry[]): LoadingEffect {

@@ -11,7 +11,7 @@ Generation remains a proposal; nothing reaches Intervals.icu until the athlete a
 - `POST /api/generate` resolves facts, calls the pure compiler, returns `GeneratedPlan`, and persists only the best-effort CAS-guarded season re-plan plus the latest publication verdict.
 - `POST /api/write` matches the submitted plan to that persisted verdict, refuses blockers and unknown/tampered plans, requires explicit acknowledgement for preferences, then writes idempotent `nodevelo-<date>` events and local block state.
 
-All refusal paths precede calendar mutation. See [ADR-0015](../DECISIONS.md#adr-0015--the-publication-gate-persists-the-verdict-at-generation-time-and-write-matches-it).
+Publication-gate refusals precede calendar mutation. Publications run in a single-process queue from the initial version check through calendar writes, local persistence, rollback and cleanup. A waiting stale publication therefore returns 409 before upserting shared date IDs or archiving history. Failed requests release the queue. This has the same single-server scope as the JSON-store locks; it is not a cross-process lock. Other block mutations still use the final CAS guard and existing rollback paths. See [ADR-0015](../DECISIONS.md#adr-0015--the-publication-gate-persists-the-verdict-at-generation-time-and-write-matches-it).
 
 ## Pipeline walkthrough (`app/api/generate/route.ts`)
 
@@ -87,6 +87,20 @@ as warmup, active, recovery, or cooldown; it does not set power or change the ta
 The verdict is persisted at generation time under `verdictHash(days, blockParams)`. `/api/write` matches that passport rather than recomputing against drifted state. A missing or corrupt passport fails closed.
 
 Core gate owners remain `workout-validate.ts`, `schedule-validate.ts`, `block-skeleton.ts`, `session-requirements.ts`, season validation, and structural checks in `publication-gate.ts`. One fact has one warning owner: skeleton conformance owns day-slot facts, week-hours validation owns totals, and recovery density owns recovery composition.
+
+## Workout library and Intervals.icu plans
+
+| Path | Current state |
+|---|---|
+| `workout-library-service.ts` → local library | Manual promotion of eligible completed quality workouts is implemented |
+| `workout-library-export.ts` → Intervals.icu workout folder | Individual-workout export, stored remote ID, lookup-before-create retry protection |
+| Local library → compiler quality slots | Full user curation/reuse/provenance loop remains FR-7; current compiler uses its typed catalogue |
+| Accepted block → Intervals.icu calendar | Existing `/api/write` publication path |
+| Accepted block → reusable Intervals.icu training plan | Separate owner-raised direction; not implemented or included in the current FR-7 exit |
+
+The [original library design](../superpowers/specs/2026-08-02-proven-workout-library-generation-design.md)
+predates FR-5. Its AI slot-authoring fallback and repair pipeline are superseded; use today's compiler
+contracts when scoping reuse. [ROADMAP](../../ROADMAP.md) owns readiness and acceptance.
 
 ## Known rough edges
 

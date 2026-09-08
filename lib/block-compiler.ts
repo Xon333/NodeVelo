@@ -130,7 +130,7 @@ function solveQualityAssignments(
   assignments: Array<QualityAssignment | null>,
   primary: QualityLibraryType
 ): QualityAssignment[] {
-  // ponytail: the skeleton places at most three quality slots, so exhaustive search is smaller and
+  // the skeleton places at most three quality slots, so exhaustive search is smaller and
   // safer than maintaining a general constraint solver; revisit only if that hard bound changes.
   const solutions: QualityAssignment[][] = [];
   const fill = (index: number): void => {

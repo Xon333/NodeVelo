@@ -838,227 +838,226 @@ export async function POST(req: Request) {
       warnings.push(`Intervention validation failed: ${e instanceof Error ? e.message : String(e)}`);
     }
 
-    if (isAnthropicConfigured()) {
-      const todayActivity = lastSync.activities.find(
-        (a) => a.date === today && (a.type === "Ride" || a.type === "VirtualRide")
-      );
+    // SR-2: ride evidence is deterministic; only the deferred language step needs a provider.
+    const todayActivity = lastSync.activities.find(
+      (a) => a.date === today && (a.type === "Ride" || a.type === "VirtualRide")
+    );
 
-      if (todayActivity) {
-        const [currentBlock, profile, priorAnalysis] = await Promise.all([
-          readCurrentBlock(),
-          readAthleteProfile(),
-          readTodayAnalysis(),
+    if (todayActivity) {
+      const [currentBlock, profile, priorAnalysis] = await Promise.all([
+        readCurrentBlock(),
+        readAthleteProfile(),
+        readTodayAnalysis(),
+      ]);
+      const plannedDay = currentBlock?.days.find((d) => d.date === today) ?? null;
+
+      try {
+        // --- I/O: re-bucket power & HR into the athlete's OWN zones (from the physiology store).
+        // Intervals' power zones are often null and its HR boundaries can differ, so we compute
+        // time-in-zone from the raw streams. Best-effort: fall back to whatever Intervals provided
+        // if a stream or the zone definitions are unavailable.
+        let powerZoneTimes = todayActivity.powerZoneTimes;
+        let hrZoneTimes = todayActivity.hrZoneTimes;
+        const [powerZones, hrZones, powerStream, hrStream] = await Promise.all([
+          readPowerZones(),
+          readHrZones(),
+          todayActivity.avgWatts !== null ? fetchPowerStream(todayActivity.id) : Promise.resolve<number[]>([]),
+          todayActivity.avgHr !== null ? fetchHrStream(todayActivity.id) : Promise.resolve<number[]>([]),
         ]);
-        const plannedDay = currentBlock?.days.find((d) => d.date === today) ?? null;
-
-        try {
-          // --- I/O: re-bucket power & HR into the athlete's OWN zones (from the physiology store).
-          // Intervals' power zones are often null and its HR boundaries can differ, so we compute
-          // time-in-zone from the raw streams. Best-effort: fall back to whatever Intervals provided
-          // if a stream or the zone definitions are unavailable.
-          let powerZoneTimes = todayActivity.powerZoneTimes;
-          let hrZoneTimes = todayActivity.hrZoneTimes;
-          const [powerZones, hrZones, powerStream, hrStream] = await Promise.all([
-            readPowerZones(),
-            readHrZones(),
-            todayActivity.avgWatts !== null ? fetchPowerStream(todayActivity.id) : Promise.resolve<number[]>([]),
-            todayActivity.avgHr !== null ? fetchHrStream(todayActivity.id) : Promise.resolve<number[]>([]),
-          ]);
-          if (powerZones.length > 0 && powerStream.length > 0) {
-            const b = bucketZones(powerStream, powerZones);
-            if (b.some((t) => t > 0)) powerZoneTimes = b;
-          }
-          if (hrZones.length > 0 && hrStream.length > 0) {
-            const b = bucketZones(hrStream, hrZones);
-            if (b.some((t) => t > 0)) hrZoneTimes = b;
-          }
-
-          // --- I/O: compare the coach's prescription against the intervals curated in Intervals.icu,
-          // and build the power-trace (downsampled streams + work bands).
-          // Re-derive the prescription from the day's workout text rather than trusting the stored
-          // array: a block written before the repeat-block parser fix carries a mis-ordered prescription
-          // (over-unders flattened [O,O,U,U] instead of [O,U,O,U]), which mis-aligned every rep. Re-parsing
-          // self-heals the matching AND the PRESCRIBED chips on the next sync, no block re-write needed.
-          // Falls back to the stored array if a day has no workout text. FTP targets are %FTP-based.
-          const prescription = plannedDay?.workoutText
-            ? parsePrescription(plannedDay.workoutText, profile.performance.ftp)
-            : plannedDay?.prescription ?? [];
-          let intervalComparison = null;
-          let executed: ExecutedInterval[] = [];
-          if (prescription.length > 0) {
-            executed = await fetchIntervals(todayActivity.id);
-            // CRITICAL (CR-review Finding 1, re-review): fetchIntervals never rejects — it resolves
-            // to [] on any upstream failure. matchPrescription does NOT treat an empty `executed`
-            // against a non-empty `prescription` as null — it fabricates a fully-formed 0% adherence
-            // comparison (structuralMismatch: false), which this patch would freeze onto the immutable
-            // ledger entry for today. The "self-healing" defense (re-runs every sync until day
-            // rollover) does not reliably hold — sync here is user-triggered only, so a transient
-            // blip on the day's last sync freezes permanently. Mirror the birth-fetch loop's guard:
-            // skip matching entirely when there's nothing executed to compare.
-            intervalComparison = executed.length > 0 ? matchPrescription(prescription, executed) : null;
-          }
-          const trace = buildRideTrace(powerStream, hrStream, executed, prescription[0]?.targetWatts ?? null);
-
-          // Power PRs: durations where this sync's ALL-TIME best beat the previous sync's all-time
-          // best. All-time is monotonic (only rises on a genuine PR), so unlike the 84-day curve it
-          // never false-drops as efforts age out of a window — and the delta is a true all-time PR.
-          const powerPRs = detectPowerPRs(
-            lastSync.powerCurveAllTime ?? lastSync.powerCurve,
-            prevSync?.powerCurveAllTime ?? []
-          );
-
-          // Hoisted once — reused by buildTodayAnalysis's aerobicEffPct input AND the easy-ride
-          // ledger stamp in the today-patch below, so today's frozen `easy` stamp is built from the exact
-          // same re-bucketed hrZoneTimes / aerobicEffPct that produced this entry's executionScore (the
-          // drift class the 2026-07-11 "Coach-prompt aerobic-discipline gap closed" fix cleaned up for a
-          // different surface). Avoids a duplicate aerobicEffPct(...) call with identical arguments.
-          const todayAerobicEffPct = aerobicEffPct(todayActivity, z2PwHrBaselineBefore(lastSync.activities, todayActivity.date));
-          const todayAboveAerobicHrFrac = timeAboveAerobicHrFraction(hrZoneTimes);
-
-          // Resolve the model + buffer ONCE here, the same way the profile route does, so the Today
-          // card's advised intake can never disagree with the reference table block generation built.
-          const latestWeightKgForToday =
-            lastSync.wellness
-              .filter((w) => w.weightKg !== null)
-              .sort((a, b) => b.date.localeCompare(a.date))[0]?.weightKg ?? profile.performance.weightKg;
-          // GOAL comparison (resolveBuffer's currentKg) uses the smoothed figure, not the raw latest
-          // weigh-in — a single reading swings ±0.5–1 kg and was flipping the buffer across the deadband
-          // boundary depending on which weigh-in happened to be last (I2). resolveNutritionModel above
-          // stays on the raw latest reading — RMR should track current mass, not a smoothed goal figure.
-          const smoothedWeightKgForToday =
-            smoothedCurrentWeightKg(lastSync.wellness, today) ?? latestWeightKgForToday;
-          const todayNutritionModel = resolveNutritionModel(
-            profile,
-            latestWeightKgForToday,
-            today,
-            isRestDayFor(lastSync.activities, today)
-          );
-          // buffer-redesign-feedforward Task 2: resolveBuffer replaces adjustBuffer — goal-rate
-          // feed-forward when profile.nutrition.neat is trustworthy, else the trend-servo fallback
-          // seeded from the goal surplus (never the retired profile.nutrition.buffer setting).
-          const todayBufferStatus = resolveBuffer(
-            profile.nutrition.neat,
-            smoothedWeightKgForToday,
-            profile.nutrition.targetWeightKg,
-            profile.nutrition.targetRateKgPerWeek,
-            weightTrendFromWellness(lastSync.wellness),
-            weightTrendFromWellness(lastSync.wellness, WEIGHT_TREND_LONG_WINDOW_DAYS),
-            profile.nutrition.buffer
-          );
-
-          // --- Pure: assemble the deterministic analysis (metrics, execution score, capped
-          // compliance, advised intake, coach-note preservation) — extracted + unit-tested (CR-G).
-          const { todayAnalysis: built, executionScore, resolvedCompliancePct } = buildTodayAnalysis({
-            today,
-            activity: todayActivity,
-            plannedDay,
-            ftp: profile.performance.ftp,
-            nutrition: { model: todayNutritionModel, bufferApplied: todayBufferStatus.bufferApplied },
-            powerZoneTimes,
-            hrZoneTimes,
-            // The athlete's synced zone tops (%FTP) as-of the ride — the IF band label's boundaries, so it
-            // reflects their own Intervals.icu zones and tracks any FTP/zone change (effective-dated).
-            powerZoneTopsPct: physiologyAsOf(physStore, todayActivity.date)?.powerZonePct ?? null,
-            // Off-plan aerobic read: today's Z2 Pw:HR vs the athlete's baseline from prior qualifying rides.
-            aerobicEffPct: todayAerobicEffPct,
-            executed, // Track B: the ride's intervals, to grade a durability long ride's effort delivery
-            intervalComparison,
-            trace,
-            powerPRs,
-            preserved: priorAnalysis,
-            resolvedCal,
-          });
-          // Deterministic post-ride fuel prompt (lib/fuel-prompt.ts) — computed once per sync, today's
-          // ride only. Pure decision, no LLM. Absent/null → key omitted entirely (sparse-field
-          // convention this codebase already uses for formState/intervals — never persist `null`).
-          const fuelPrompt = deriveFuelPrompt({
-            activity: todayActivity,
-            plannedType: plannedDay?.type ?? null,
-            carbsOptimum: resolveCarbsOptimumForPrompt(calibration.carbsOptimum),
-          });
-          todayAnalysis = { ...built, ...(fuelPrompt ? { fuelPrompt } : {}) };
-          await writeTodayAnalysis(todayAnalysis);
-
-          // Track C: the same pure grader buildTodayAnalysis calls internally (lib/ride-analysis.ts)
-          // to feed executionScore — it isn't returned from that result, and only the today-patch below
-          // needs the raw signal for provenance, so it's cheaper to recompute here (same inputs, already
-          // in scope) than to widen buildTodayAnalysis's return shape for one caller.
-          const durabilityDelivery = gradeDurabilityDelivery(
-            plannedDay?.durabilityTemplate ?? null,
-            executed,
-            profile.performance.ftp,
-            todayActivity.movingTimeSec
-          );
-
-          // Keep the ledger's entry for today consistent with this richer, interval-aware
-          // analysis. buildRideScores can't see interval bails (it doesn't fetch per-ride
-          // intervals); this can — so today's execution + capped compliance match across the
-          // Today card, the Plan calendar, the trend pulse, and Trends.
-          try {
-            if (executionScore !== null) {
-              // Transactional (CR-A): re-read + patch today's entry inside the per-file lock so this
-              // richer interval-aware score can't clobber (or be clobbered by) a concurrent write.
-              await updateScoreLog((entries) =>
-                entries.map((e) =>
-                  e.date === today && !e.legacy
-                    ? {
-                        ...e,
-                        executionScore,
-                        compliancePct: resolvedCompliancePct,
-                        // Re-stamp with the current calibration (this entry may be a stale prior one) —
-                        // the per-type IF offset for a planned day; off-plan rides skip it (intensity-vs-type
-                        // branch is circular for them), so they stamp nothing.
-                        ...calStampFor(resolvedCal, e.planned ? e.plannedType : null, !e.planned),
-                        // Freeze the adherence input that produced this richer score (the direct SIT-bug
-                        // fix): without this, a re-derivation later has no adherence data to work from.
-                        // Guarded the same way the birth-fetch path gates its candidates (Finding 3):
-                        // Z2/Recovery/durability days are scored by an entirely different system, so an
-                        // `intervals` stamp there would be meaningless provenance — a latent trap for any
-                        // future consumer of `entry.intervals` that assumes its presence implies relevance.
-                        ...(intervalComparison &&
-                        plannedDay?.type !== "Z2" &&
-                        plannedDay?.type !== "Recovery" &&
-                        !plannedDay?.durabilityTemplate
-                          ? { intervals: intervalStampFrom(intervalComparison) }
-                          : {}),
-                        // Track C: freeze the delivery grade that judged today's durability ride — the
-                        // loading loop's power-only outcome. Only the today path can stamp this (it alone
-                        // fetches executed intervals); a late-synced durability ride stays unstamped and
-                        // simply doesn't feed the loop.
-                        ...(plannedDay?.durabilityTemplate && durabilityDelivery != null
-                          ? { durabilityDelivery: { signal: durabilityDelivery.signal } }
-                          : {}),
-                        // Re-stamp the easy-ride merged-read provenance from THIS richer, re-bucketed
-                        // HR data — without this, today's frozen `easy` stamp would stay whatever
-                        // buildRideScores computed from the raw (non-re-bucketed) hrZoneTimes, drifting from
-                        // the executionScore this same patch just replaced. Gated internally by easyStampFor
-                        // itself (Z2/Recovery, non-embeds-efforts template) — `{}` when it doesn't apply.
-                        ...easyStampFor(todayActivity, plannedDay?.type ?? "", plannedDay?.durabilityTemplate, todayAboveAerobicHrFrac, todayAerobicEffPct),
-                        // NV-13 (2026-08-15): mergeScoreLog's "existing overrides fresh" rule freezes
-                        // whatever fuelStampFor read at the FIRST sync of the day — if carbs were logged
-                        // on Intervals.icu after that (a common sequence: sync, then log nutrition), every
-                        // later sync's freshly-computed fuel stamp was discarded in favour of the stale,
-                        // carbs-less one. Only this today-patch can still mutate today's entry, so it's the
-                        // one place that can refresh the stamp while the date is still mutable.
-                        // Spread-ready `{}` from fuelStampFor when nothing is logged — preserves whatever
-                        // this entry already had (does not un-stamp on a transient carbs read failure).
-                        ...fuelStampFor(todayActivity),
-                      }
-                    : e
-                )
-              );
-            }
-          } catch (e) {
-            // Best-effort — the ledger already has a coarse entry from buildRideScores.
-            logWarn("/api/sync", "ride-trace-match", e instanceof Error ? e.message : String(e));
-          }
-          // The coach note + its Intervals.icu auto-post now happen in /api/analyze (the deferred
-          // LLM step), so this deterministic block returns without an AI call.
-        } catch (e) {
-          // Don't fail the whole sync on the deterministic analysis — but surface it.
-          logWarn("/api/sync", "ride-analysis", e instanceof Error ? e.message : String(e));
-          warnings.push(`Ride analysis failed: ${e instanceof Error ? e.message : String(e)}`);
+        if (powerZones.length > 0 && powerStream.length > 0) {
+          const b = bucketZones(powerStream, powerZones);
+          if (b.some((t) => t > 0)) powerZoneTimes = b;
         }
+        if (hrZones.length > 0 && hrStream.length > 0) {
+          const b = bucketZones(hrStream, hrZones);
+          if (b.some((t) => t > 0)) hrZoneTimes = b;
+        }
+
+        // --- I/O: compare the coach's prescription against the intervals curated in Intervals.icu,
+        // and build the power-trace (downsampled streams + work bands).
+        // Re-derive the prescription from the day's workout text rather than trusting the stored
+        // array: a block written before the repeat-block parser fix carries a mis-ordered prescription
+        // (over-unders flattened [O,O,U,U] instead of [O,U,O,U]), which mis-aligned every rep. Re-parsing
+        // self-heals the matching AND the PRESCRIBED chips on the next sync, no block re-write needed.
+        // Falls back to the stored array if a day has no workout text. FTP targets are %FTP-based.
+        const prescription = plannedDay?.workoutText
+          ? parsePrescription(plannedDay.workoutText, profile.performance.ftp)
+          : plannedDay?.prescription ?? [];
+        let intervalComparison = null;
+        let executed: ExecutedInterval[] = [];
+        if (prescription.length > 0) {
+          executed = await fetchIntervals(todayActivity.id);
+          // CRITICAL (CR-review Finding 1, re-review): fetchIntervals never rejects — it resolves
+          // to [] on any upstream failure. matchPrescription does NOT treat an empty `executed`
+          // against a non-empty `prescription` as null — it fabricates a fully-formed 0% adherence
+          // comparison (structuralMismatch: false), which this patch would freeze onto the immutable
+          // ledger entry for today. The "self-healing" defense (re-runs every sync until day
+          // rollover) does not reliably hold — sync here is user-triggered only, so a transient
+          // blip on the day's last sync freezes permanently. Mirror the birth-fetch loop's guard:
+          // skip matching entirely when there's nothing executed to compare.
+          intervalComparison = executed.length > 0 ? matchPrescription(prescription, executed) : null;
+        }
+        const trace = buildRideTrace(powerStream, hrStream, executed, prescription[0]?.targetWatts ?? null);
+
+        // Power PRs: durations where this sync's ALL-TIME best beat the previous sync's all-time
+        // best. All-time is monotonic (only rises on a genuine PR), so unlike the 84-day curve it
+        // never false-drops as efforts age out of a window — and the delta is a true all-time PR.
+        const powerPRs = detectPowerPRs(
+          lastSync.powerCurveAllTime ?? lastSync.powerCurve,
+          prevSync?.powerCurveAllTime ?? []
+        );
+
+        // Hoisted once — reused by buildTodayAnalysis's aerobicEffPct input AND the easy-ride
+        // ledger stamp in the today-patch below, so today's frozen `easy` stamp is built from the exact
+        // same re-bucketed hrZoneTimes / aerobicEffPct that produced this entry's executionScore (the
+        // drift class the 2026-07-11 "Coach-prompt aerobic-discipline gap closed" fix cleaned up for a
+        // different surface). Avoids a duplicate aerobicEffPct(...) call with identical arguments.
+        const todayAerobicEffPct = aerobicEffPct(todayActivity, z2PwHrBaselineBefore(lastSync.activities, todayActivity.date));
+        const todayAboveAerobicHrFrac = timeAboveAerobicHrFraction(hrZoneTimes);
+
+        // Resolve the model + buffer ONCE here, the same way the profile route does, so the Today
+        // card's advised intake can never disagree with the reference table block generation built.
+        const latestWeightKgForToday =
+          lastSync.wellness
+            .filter((w) => w.weightKg !== null)
+            .sort((a, b) => b.date.localeCompare(a.date))[0]?.weightKg ?? profile.performance.weightKg;
+        // GOAL comparison (resolveBuffer's currentKg) uses the smoothed figure, not the raw latest
+        // weigh-in — a single reading swings ±0.5–1 kg and was flipping the buffer across the deadband
+        // boundary depending on which weigh-in happened to be last (I2). resolveNutritionModel above
+        // stays on the raw latest reading — RMR should track current mass, not a smoothed goal figure.
+        const smoothedWeightKgForToday =
+          smoothedCurrentWeightKg(lastSync.wellness, today) ?? latestWeightKgForToday;
+        const todayNutritionModel = resolveNutritionModel(
+          profile,
+          latestWeightKgForToday,
+          today,
+          isRestDayFor(lastSync.activities, today)
+        );
+        // buffer-redesign-feedforward Task 2: resolveBuffer replaces adjustBuffer — goal-rate
+        // feed-forward when profile.nutrition.neat is trustworthy, else the trend-servo fallback
+        // seeded from the goal surplus (never the retired profile.nutrition.buffer setting).
+        const todayBufferStatus = resolveBuffer(
+          profile.nutrition.neat,
+          smoothedWeightKgForToday,
+          profile.nutrition.targetWeightKg,
+          profile.nutrition.targetRateKgPerWeek,
+          weightTrendFromWellness(lastSync.wellness),
+          weightTrendFromWellness(lastSync.wellness, WEIGHT_TREND_LONG_WINDOW_DAYS),
+          profile.nutrition.buffer
+        );
+
+        // --- Pure: assemble the deterministic analysis (metrics, execution score, capped
+        // compliance, advised intake, coach-note preservation) — extracted + unit-tested (CR-G).
+        const { todayAnalysis: built, executionScore, resolvedCompliancePct } = buildTodayAnalysis({
+          today,
+          activity: todayActivity,
+          plannedDay,
+          ftp: profile.performance.ftp,
+          nutrition: { model: todayNutritionModel, bufferApplied: todayBufferStatus.bufferApplied },
+          powerZoneTimes,
+          hrZoneTimes,
+          // The athlete's synced zone tops (%FTP) as-of the ride — the IF band label's boundaries, so it
+          // reflects their own Intervals.icu zones and tracks any FTP/zone change (effective-dated).
+          powerZoneTopsPct: physiologyAsOf(physStore, todayActivity.date)?.powerZonePct ?? null,
+          // Off-plan aerobic read: today's Z2 Pw:HR vs the athlete's baseline from prior qualifying rides.
+          aerobicEffPct: todayAerobicEffPct,
+          executed, // Track B: the ride's intervals, to grade a durability long ride's effort delivery
+          intervalComparison,
+          trace,
+          powerPRs,
+          preserved: priorAnalysis,
+          resolvedCal,
+        });
+        // Deterministic post-ride fuel prompt (lib/fuel-prompt.ts) — computed once per sync, today's
+        // ride only. Pure decision, no LLM. Absent/null → key omitted entirely (sparse-field
+        // convention this codebase already uses for formState/intervals — never persist `null`).
+        const fuelPrompt = deriveFuelPrompt({
+          activity: todayActivity,
+          plannedType: plannedDay?.type ?? null,
+          carbsOptimum: resolveCarbsOptimumForPrompt(calibration.carbsOptimum),
+        });
+        todayAnalysis = { ...built, ...(fuelPrompt ? { fuelPrompt } : {}) };
+        await writeTodayAnalysis(todayAnalysis);
+
+        // Track C: the same pure grader buildTodayAnalysis calls internally (lib/ride-analysis.ts)
+        // to feed executionScore — it isn't returned from that result, and only the today-patch below
+        // needs the raw signal for provenance, so it's cheaper to recompute here (same inputs, already
+        // in scope) than to widen buildTodayAnalysis's return shape for one caller.
+        const durabilityDelivery = gradeDurabilityDelivery(
+          plannedDay?.durabilityTemplate ?? null,
+          executed,
+          profile.performance.ftp,
+          todayActivity.movingTimeSec
+        );
+
+        // Keep the ledger's entry for today consistent with this richer, interval-aware
+        // analysis. buildRideScores can't see interval bails (it doesn't fetch per-ride
+        // intervals); this can — so today's execution + capped compliance match across the
+        // Today card, the Plan calendar, the trend pulse, and Trends.
+        try {
+          if (executionScore !== null) {
+            // Transactional (CR-A): re-read + patch today's entry inside the per-file lock so this
+            // richer interval-aware score can't clobber (or be clobbered by) a concurrent write.
+            await updateScoreLog((entries) =>
+              entries.map((e) =>
+                e.date === today && !e.legacy
+                  ? {
+                      ...e,
+                      executionScore,
+                      compliancePct: resolvedCompliancePct,
+                      // Re-stamp with the current calibration (this entry may be a stale prior one) —
+                      // the per-type IF offset for a planned day; off-plan rides skip it (intensity-vs-type
+                      // branch is circular for them), so they stamp nothing.
+                      ...calStampFor(resolvedCal, e.planned ? e.plannedType : null, !e.planned),
+                      // Freeze the adherence input that produced this richer score (the direct SIT-bug
+                      // fix): without this, a re-derivation later has no adherence data to work from.
+                      // Guarded the same way the birth-fetch path gates its candidates (Finding 3):
+                      // Z2/Recovery/durability days are scored by an entirely different system, so an
+                      // `intervals` stamp there would be meaningless provenance — a latent trap for any
+                      // future consumer of `entry.intervals` that assumes its presence implies relevance.
+                      ...(intervalComparison &&
+                      plannedDay?.type !== "Z2" &&
+                      plannedDay?.type !== "Recovery" &&
+                      !plannedDay?.durabilityTemplate
+                        ? { intervals: intervalStampFrom(intervalComparison) }
+                        : {}),
+                      // Track C: freeze the delivery grade that judged today's durability ride — the
+                      // loading loop's power-only outcome. Only the today path can stamp this (it alone
+                      // fetches executed intervals); a late-synced durability ride stays unstamped and
+                      // simply doesn't feed the loop.
+                      ...(plannedDay?.durabilityTemplate && durabilityDelivery != null
+                        ? { durabilityDelivery: { signal: durabilityDelivery.signal } }
+                        : {}),
+                      // Re-stamp the easy-ride merged-read provenance from THIS richer, re-bucketed
+                      // HR data — without this, today's frozen `easy` stamp would stay whatever
+                      // buildRideScores computed from the raw (non-re-bucketed) hrZoneTimes, drifting from
+                      // the executionScore this same patch just replaced. Gated internally by easyStampFor
+                      // itself (Z2/Recovery, non-embeds-efforts template) — `{}` when it doesn't apply.
+                      ...easyStampFor(todayActivity, plannedDay?.type ?? "", plannedDay?.durabilityTemplate, todayAboveAerobicHrFrac, todayAerobicEffPct),
+                      // NV-13 (2026-08-15): mergeScoreLog's "existing overrides fresh" rule freezes
+                      // whatever fuelStampFor read at the FIRST sync of the day — if carbs were logged
+                      // on Intervals.icu after that (a common sequence: sync, then log nutrition), every
+                      // later sync's freshly-computed fuel stamp was discarded in favour of the stale,
+                      // carbs-less one. Only this today-patch can still mutate today's entry, so it's the
+                      // one place that can refresh the stamp while the date is still mutable.
+                      // Spread-ready `{}` from fuelStampFor when nothing is logged — preserves whatever
+                      // this entry already had (does not un-stamp on a transient carbs read failure).
+                      ...fuelStampFor(todayActivity),
+                    }
+                  : e
+              )
+            );
+          }
+        } catch (e) {
+          // Best-effort — the ledger already has a coarse entry from buildRideScores.
+          logWarn("/api/sync", "ride-trace-match", e instanceof Error ? e.message : String(e));
+        }
+        // The coach note + its Intervals.icu auto-post now happen in /api/analyze (the deferred
+        // LLM step), so this deterministic block returns without an AI call.
+      } catch (e) {
+        // Don't fail the whole sync on the deterministic analysis — but surface it.
+        logWarn("/api/sync", "ride-analysis", e instanceof Error ? e.message : String(e));
+        warnings.push(`Ride analysis failed: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
 
@@ -1074,7 +1073,7 @@ export async function POST(req: Request) {
     ]);
     // A fresh ride has its deterministic analysis but no coach note yet — tell the client to
     // trigger /api/analyze for the (slow) LLM note rather than blocking this response on it.
-    const analysisPending = todayAnalysis !== null && !todayAnalysis.coachNote;
+    const analysisPending = isAnthropicConfigured() && todayAnalysis !== null && !todayAnalysis.coachNote;
     // Signal fusion (§5) recomputed on the fresh data so the glanceable state updates after a sync.
     const athleteState = computeAthleteState(
       athleteStateInputsFrom(lastSync, buildAthleteModel(scoreLog.entries, intentStore.overlays), acwr, today),

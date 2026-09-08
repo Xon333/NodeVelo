@@ -31,33 +31,29 @@ Read [systems/06-generation.md](systems/06-generation.md) first.
 
 ## Turn over a block (end → retrospective → next block)
 
-The first turnover happened and was confirmed clean (2026-07-22 → ARCHIVE.md) — `block-history.json`
-and `intervention-log.json` both exist with real entries. Kept as a reusable reference for any
-future turnover, attended or not.
+| Step | Action / evidence |
+|---|---|
+| Before closeout | Export a backup; sync final rides |
+| Close on Plan | Finished block closes normally; early end requires a reason and excludes future days |
+| Check history | New block-history entry contains closeout evidence and the lived window |
+| Acknowledge | Records review; seeds/reflections remain history, not compiler inputs |
+| Next block | Generate → preview → accept; confirm current block and Today session |
+| Language verification | For an unverified/changed AI path, run a live retrospective and inspect output; separately verify deterministic fallback |
 
-1. **Backup first:** `GET /api/export` → save the bundle off-machine. `POST /api/import` is the exact restore path for the managed `data/` + `knowledge-base/` trees if you need to undo the turnover.
-2. Sync (`POST /api/sync`) so the final rides are scored into the ledger.
-3. **Wrap up on `/plan`:** a finished block proceeds straight to closeout; an unfinished one requires
-   typing an explicit early-end reason first (the reason is stamped on the retro frontmatter and the
-   history entry, and not-yet-lived days are cut from the archive). Closeout is deterministic-first —
-   Claude's narrative + structured reflections are best-effort enrichment, never a gate.
-4. Verify: `data/block-history.json` has a new entry, its newest entry carries a `closeout` evidence object, `days` non-empty, `nextBlockSeeds` non-empty.
-5. **Review & acknowledge on `/plan`.** Acknowledgement records the athlete's review in history; deterministic block compilation never consumes retrospective seeds/reflections. Degraded mode (Anthropic key unset or the narrative call fails) still persists closeout facts and deterministic priorities.
-6. Generate + preview + write the next block on `/plan`. `seasonFocus`/`seasonPhase` land on the NEW
-   block's `current-block.json` here, not on the retrospective's `block-history.json` entry.
-7. Verify: if coaching directives fired (the common case), `data/intervention-log.json` now exists with this block's directives + baselines — zero directives is a legitimate outcome (no insights cleared the model's gate that day), not a failure; `current-block.json` is the new block.
-8. Confirm `/today` shows the new block's first session; the block-completion nudge is gone.
-9. **Owed smoke run (PR #92, first genuine turnover after 2026-08-23):** the retrospective
-   closeout shipped with its live LLM path unexercised — before calling this turnover done, run
-   `POST /api/retrospective` once against the live API on this real block and read the actual
-   output: narrative well-formed and `approveSeedsInMarkdown` round-tripping the real frontmatter
-   (AGENTS.md rule). The separate degraded-mode check must verify deterministic fallback with
-   `## Retrospective` omitted cleanly; it is not the same run as the live narrative check.
-   - **If any step fails:** stop, `POST /api/import` the backup, report — do not improvise against live data.
+Zero qualifying interventions is valid. If a step fails, stop and inspect persisted state before
+using the exact restore path; do not automatically erase newer data. Closeout persistence contracts:
+[Knowledge](systems/04-knowledge.md), [Invariants](INVARIANTS.md#block-closeout--acknowledgement).
 
 ## Add or change a validator
 
-Placement rules → `lib/schedule-validate.ts`; per-session protocol → `lib/workout-validate.ts`; wire into `app/api/generate/route.ts`, which runs them via `lib/publication-gate.ts`'s `evaluatePublicationGate` — classify each finding there by emitter into blocker / preference / advisory ([INVARIANTS #62](INVARIANTS.md)), never by message text; a new validator's findings are unclassified (informational) until you bucket them. Validators warn — they never rewrite ([INVARIANTS #13](INVARIANTS.md)). **One fact, one owner** — before adding a new warning, check no existing validator already states that fact for a different reason; a recovery week once produced three near-identical warnings for one problem ([06-generation.md § Known rough edges](systems/06-generation.md#known-rough-edges), [INVARIANTS § Generation contracts](INVARIANTS.md#generation-contracts)).
+| Concern | Owner |
+|---|---|
+| Placement | `schedule-validate.ts` |
+| Workout protocol | `workout-validate.ts` |
+| Blocker/preference/advisory classification | `publication-gate.evaluatePublicationGate` |
+
+Emit each fact once, classify by emitter, and never rewrite compiler output. Wire the validator into
+the gate and verify its publication behavior ([contracts](INVARIANTS.md#generation-contracts)).
 
 ## Change scoring
 
@@ -93,7 +89,7 @@ Engine logic: colocated `lib/<name>.test.ts` (vitest, node env). Components: col
 
 ## Ship a docs change
 
-Follow the closing ritual's ownership table in [COMPASS.md](COMPASS.md#session-rituals) and the `docs-sweep` skill. Shipped work → ARCHIVE.md; keep README's doc map current; commit docs separately from code.
+Follow [documentation ownership](COMPASS.md#documentation-ownership) and the `docs-sweep` skill. Record shipped work in [shipment history](history/shipments.md); update the Compass when navigation changes. Verify links and preserve historical pointers.
 
 ## Add a workout type
 

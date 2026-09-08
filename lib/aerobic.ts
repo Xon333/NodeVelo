@@ -68,7 +68,7 @@ export function qualifyingPwHr(r: PwHrRide): number | null {
 // The athlete's aerobic baseline as-of a ride: mean Z2 Pw:HR over qualifying rides STRICTLY BEFORE `date`
 // within the trailing window. Excludes the ride itself (no self-reference — same discipline as RV2-4) and
 // is as-of correct for scoring a historical entry. Null below the min-sample floor.
-// ponytail: O(rides) per call → O(n²) across a full ledger rebuild; n ≤ a sync window of rides, so it's
+// O(rides) per call → O(n²) across a full ledger rebuild; n ≤ a sync window of rides, so it's
 // fine — switch to a rolling accumulator only if a rebuild ever shows up in a profile.
 export function z2PwHrBaselineBefore(rides: PwHrRide[], date: string): number | null {
   const cutoff = new Date(Date.parse(date) - AEROBIC_BASELINE_DAYS * 86_400_000).toISOString().slice(0, 10);

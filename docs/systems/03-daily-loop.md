@@ -1,39 +1,73 @@
-# 03 · Daily loop — readiness → ride → debrief
+# 03 · Daily loop — with and without a block
 
-**Why this exists:** a block is a plan; a day is a negotiation. This layer answers "should I actually do today's session, and how did it go?" — deterministic readiness signals, an athlete-confirmed override path, and a post-ride debrief the athlete can trust. **Where it sits:** reads [02-scoring](02-scoring-and-learning.md)'s model and today's sync; feeds dispositions back into the ledger; surfaces on the Today page ([08-frontend](08-frontend.md)). **Tradeoff:** signals never auto-mutate the plan — only the athlete-confirmed morning-check path does; advisory-by-default costs automation but preserves trust.
-
-Surface: the Today page (auto-switches pre-ride ↔ post-ride when a synced ride matches today's **local** date — always `localToday()`/`resolveToday()` from `lib/date.ts`, never UTC).
+Today uses the athlete's local date to select pre-ride or post-ride presentation. `SyncProvider`
+provides shared state; [scoring](02-scoring-and-learning.md) and [nutrition](09-nutrition.md) own calculations.
 
 ## Morning (pre-ride)
 
-1. **Morning check** (`lib/morning-check.ts`, `MorningCheckIn.tsx`, `/api/morning-check`): optional ill / extreme-fatigue / injury flag → deterministic decision. Injury → rest, any day (musculoskeletal: motion is the hazard regardless of intensity). Metabolic flags → downgrade on quality days, rest on easy days. The athlete confirms; the apply path swaps/deloads via `reschedule.ts` and mirrors to the calendar. (Note: this PUT is the one block mutation without a CAS version guard — accepted, same-day scope.)
-2. **Readiness** (`lib/readiness.ts`): Build/Hold/Recover from prior-day TSB + ATL:CTL ratio; fatigue alerts, load-ramp alerts, ACWR. HRV suppression exists but is off by default.
-3. **Athlete state** (`lib/athlete-state.ts`): the 0–100 fused score — TSB, ACWR, execution EWMA (from the athlete model), Z2 aerobic efficiency, off-plan behaviour — with the **lived-signal override**: ≥2 corroborated negative signals cap a fresh-looking load-model score. Shown on Today (`AthleteStateCard`) with its "why" drivers on Model (`StateDriversCard`); both share `athlete-state-ui.tsx` so band colors can't drift. Spec: [../specs/athlete-state.md](../specs/athlete-state.md).
-4. **Coach snapshot** (`lib/coach-snapshot.ts`): fuses all of the above plus fuel state, FTP-retest advisory, and TSB-modifier guidance (`resolveTsbModifier`: deep-fatigue / productive-overload / balanced / fresh, calibratable edges) into the ONE bundle shared by the Today card and block generation. There is deliberately **no auto-mutation of today's plan from readiness** — signals are advisory; only the athlete-confirmed morning-check path changes the plan.
-5. **Carb-loading prompt** (`lib/loading.ts`, `/api/loading`): day-before g/kg target ahead of a durability long ride; one-tap loaded/skipped attribution feeds an effectiveness assessment.
-6. **No-block Today** (Phase 3a, `lib/weekly-envelope.ts`, `lib/session-suggestion.ts`, `lib/no-block-summary.ts`): when there's no active block — never had one, or a block finished and hasn't been regenerated — `PlannedToday` (`components/dashboard/today.tsx`) renders a weekly TSS envelope (resolved Monday, one-way-reduction-only through the week, persisted to `data/weekly-envelope.json` via `lib/data-store.ts`'s `updateWeeklyEnvelope`), one suggested session (`gatherFocusInputs`/`chooseNextFocus` reuse from `lib/season.ts`, gated on the envelope's own range vs. week-to-date load — never a menu, never a plan), and a three-stream Load/Recovery/Execution headline. No new LLM call; the fused `AthleteStateCard` (Zone 1) is unchanged. Hidden entirely while a block is genuinely active. A brand-new athlete with no tolerated week yet resolves a 0–0 envelope; `suggestSession` treats that as "no evidence," not "already at the top of the range," and returns no suggestion (PR #50).
+| With an active block | Without an active block |
+|---|---|
+| Planned session and prescription | One session suggestion, if enough evidence exists |
+| Readiness and ranked drivers | Readiness plus Load/Recovery/Execution summary |
+| Athlete-confirmed morning adjustment | Weekly load envelope derived from prior tolerated load |
+| Daily nutrition and eligible loading prompt | Daily nutrition from the same model |
+
+Readiness is advisory. The illness/fatigue/injury check-in can change a planned session only after
+confirmation: injury → rest; illness/fatigue → downgrade quality or rest on an easy day.
+`morning-check.ts` owns the decision, `calendar-mirror.ts` the outbound change.
+
+### Self-directed training with Intervals.icu
+
+```mermaid
+flowchart LR
+  I[Ride chosen by athlete] --> ICU[Intervals.icu activity, note and laps]
+  ICU --> SYNC[Sync]
+  SYNC --> LOAD[Weekly load and readiness]
+  SYNC --> PARSE[Parse supported labelled intent]
+  PARSE --> GRADE[Grade matched lap evidence]
+  GRADE --> REVIEW[Today debrief and athlete model]
+  LOAD --> NEXT[One suggested session]
+```
+
+| Component | Contract |
+|---|---|
+| `weekly-envelope.ts` | Monday-resolved weekly TSS range; may tighten, never widen midweek |
+| `session-suggestion.ts` | Uses focus selection and remaining envelope; creates no block or calendar event |
+| `no-block-summary.ts` | Composes Load/Recovery/Execution text from existing signals |
+| `intent-note-parser.ts` | Supported labelled bullets only; does not interpret arbitrary prose |
+| `intent-runner.ts` | Fetches laps for supported intent; unsupported/ambiguous evidence stays ungraded |
+
+A new athlete with no tolerated week gets no suggestion, not a zero-load prescription. External
+Intervals.icu plans are not automatically imported as prescribed NodeVelo blocks. Intent overlays
+let supported self-directed execution inform the model without rewriting the original ledger.
 
 ## After the ride
 
-`doSync()` (SyncProvider) → `POST /api/sync` computes everything deterministic — zones, interval match, PRs (`lib/pr.ts`, curve-to-curve), execution score, advised intake — into `data/today-analysis.json`, then returns `analysisPending: true`. The client then calls `POST /api/analyze` (the deferred LLM step) for the coach note ([ADR-0005](../DECISIONS.md)); with `autoPostCoachNote` on, the note is also posted to Intervals.icu as a NOTE event.
+| Step | Output |
+|---|---|
+| `POST /api/sync` | Scores, zones, interval evidence, PRs, daily intake target |
+| `POST /api/intent` | Deterministic interpretation/grading of supported self-directed notes |
+| `POST /api/analyze` | Optional coach-note language; may also post a NOTE to Intervals.icu when configured |
+| Today | Ride score/evidence, trace, fuel guidance, and disposition controls |
 
-Post-ride surfaces on Today: `TodayRideCard` (rep breakdown, `RideTrace` power chart, PR banner, coach note), **session disposition** chips (`SessionDisposition.tsx` — "compromised" is the one that changes learning), and the **fuel prompt** (`lib/fuel-prompt.ts` nudges logging when a long/interval ride has no carbs logged).
+Deterministic Today finalization runs for supported rides with or without Anthropic configuration: zones, interval evidence, trace, score, fuel guidance, and today's ledger enrichment remain available. Only a missing optional coach note sets `analysisPending`, and only when Anthropic is configured.
 
-Self-directed intent parsing is deterministic: deferred `POST /api/intent` parses strict labelled bullets, matches synced Intervals.icu laps, and grades supported objectives without contacting Anthropic. The Today debrief renders the resulting overlay; the separate `/api/analyze` call only phrases the already-computed score and evidence.
-
-**Nutrition is code, not AI** ([DECISIONS](../DECISIONS.md) ADR-0002 applied to food): `lib/nutrition.ts` computes daily targets deterministically (base + session kJ + a buffer that self-adjusts ±150 kcal against the synced 7-day weight trend, capped 0–600; flat target on rest days) plus pre/in/post-ride carbs. The fuel prompt's rules are pure code too: a logged `0` is a real "fasted" data point, never nudged; the logged-vs-optimum gap only surfaces once the athlete's derived `carbsOptimum` reaches medium/high confidence — a population default never masquerades as personalized. The LLM phrases these numbers verbatim; it never computes them.
+A compromised disposition excludes the ride from teaching the model. Logged intake `0` means a
+real fasted observation; it is not missing data. Personalized fuel nudges require trusted calibration.
 
 ## Missed/failed sessions
 
-- **Reactive**: a quality session missed or compromised in the last 10 days → `reschedule.suggestReschedule` proposes the earliest future rest day not flanked by quality (`RescheduleBanner` on Plan).
-- **Proactive**: "can't deliver today's quality" → load-neutral swap with an upcoming easy day, or an honest deload with the dropped stimulus carried on `CurrentBlock.deferredQuality` for the next generation. Never raids a rest day. All moves go through `calendar-mirror.persistMirroredMove` (local commit first, then best-effort mirror).
+| Trigger | Behavior |
+|---|---|
+| Missed/compromised quality session | Suggest a future make-up subject to scheduling constraints |
+| Confirmed morning downgrade | Swap onto a suitable easy day or deload |
+| Accepted change | Commit locally, then mirror to Intervals.icu; report mirror failures |
 
 ## Common modifications
 
-| Change | Where |
+| Change | Start here |
 |---|---|
-| New readiness signal | `readiness.ts` → wire into `athlete-state.athleteStateInputsFrom` and/or `coach-snapshot.resolveCoachSignals`; weights via `calibration.resolveAthleteStateWeights` |
-| State-fusion weights/bands | `calibration.ts` (defaults) / Settings overrides; spec's tunable-knobs section |
-| Morning-check decision rules | `morning-check.decideMorningCheck` (pure, tested) |
-| Today-card content | `components/dashboard/today.tsx` (~960 lines — the page's named-export module, already flagged as a split candidate) |
-| No-block envelope/suggestion logic | `lib/weekly-envelope.ts` (role/range/persistence), `lib/session-suggestion.ts` (focus→session mapping), `lib/no-block-summary.ts` (composition) |
+| Readiness / state driver | `readiness.ts`, `athlete-state.ts`, `coach-snapshot.ts` |
+| Morning decision | `morning-check.decideMorningCheck` |
+| No-block guidance | Envelope, suggestion, and summary modules above |
+| Debrief / intent display | `dashboard/today.tsx`, `dashboard/ride-intent.tsx` |
