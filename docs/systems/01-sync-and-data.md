@@ -42,13 +42,13 @@ flowchart TD
   LS --> SCORE[score-log.buildRideScores + backfill → score-log.json]
   SCORE --> EX[backfillExecutionOntoDays → current-block + history]
   SCORE --> IV[intervention.validateInterventions → intervention-log.json]
-  LS --> T{Ride today and Anthropic configured?}
-  T -->|yes| TA[ride-analysis.buildTodayAnalysis → today-analysis.json\nresponse: analysisPending=true]
-  TA --> AN[client then POSTs /api/analyze → LLM coach note]
+  LS --> T{Supported ride today?}
+  T -->|yes| TA[ride-analysis.buildTodayAnalysis → today-analysis.json\nresponse: deterministic evidence]
+  TA -->|Anthropic configured and note missing| AN[client then POSTs /api/analyze → LLM coach note]
   LS --> BK[backup.snapshotBackup → NODEVELO_BACKUP_DIR, best-effort, keeps 14]
 ```
 
-**Known limitation:** the configuration guard above also gates deterministic finalization (SR-2); sync makes no LLM call, but this part is not yet provider-independent.
+Deterministic ride finalization is provider-independent; [the daily loop](03-daily-loop.md#after-the-ride) owns the evidence and optional-language contract.
 
 Safety properties worth knowing: every Intervals.icu request has a 20s abort timeout; the all-time power curve merges **monotonically** so a partial fetch can't false-report a PR drop; a suspect-empty sync is refused, not written; the LLM step is deferred to `/api/analyze` so sync stays fast and an Anthropic hiccup is isolated ([ADR-0005](../DECISIONS.md)).
 

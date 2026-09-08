@@ -5,7 +5,7 @@ Available operations and their limits. [Compass](docs/COMPASS.md) maps implement
 
 | Area | Available now | Boundary |
 |---|---|---|
-| **Today** | Pre/post-ride view, readiness drivers, session instructions, fueling, illness/fatigue/injury check-in | Readiness is advisory; plan changes need athlete confirmation. Part of finalization still requires Anthropic configuration (SR-2). |
+| **Today** | Pre/post-ride view, readiness drivers, session instructions, fueling, illness/fatigue/injury check-in | Readiness is advisory; plan changes need athlete confirmation. Deterministic ride evidence works without Anthropic; coach-note prose is optional. |
 | **No active block** | Weekly load envelope and one suggested session | No suggestion when evidence is insufficient; this does not create a block. |
 | **Ride review** | Planned-vs-actual score, interval comparisons, power/HR trace, optional Claude note | Past ledger entries retain historical context; today's entry can refresh. |
 | **Self-directed rides** | Parse supported labelled notes and grade matching Intervals.icu laps through intent overlays | Unsupported/ambiguous evidence stays ungraded. This is a bounded grammar, not open-ended chat. |

@@ -13,6 +13,10 @@ exact commits.
 ---
 
 
+## SR-1 · Concurrent publication rollback (2026-09-08)
+
+Merged in [PR #116](https://github.com/Xon333/NodeVelo/pull/116). A deterministic two-writer reproduction returned 200/409 while deleting both winning calendar IDs. Publication now queues from initial version check through cleanup, so a stale second request cannot upsert or roll back the winner's events or append history. The regression verifies remote IDs, active-block IDs, one archive, and queue release after failure. Separate read-only review found no actionable defects; all 2,514 application tests and required checks passed locally and GitHub CI passed. Scope is concurrent publications in the supported single server process; other mutation routes retain their existing CAS behavior.
+
 ## Documentation and agent navigation overhaul (2026-09-07)
 
 Replaced the long README and feature changelog with product/setup and capability/limit entry points;

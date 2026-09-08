@@ -20,8 +20,7 @@ Only its current row is active. A review recommendation is not automatically an 
 was previously local-only and its P1 reports were missing here. Current source still contains the
 reported branches; targeted reproduction is the next action, not another broad audit.
 
-- ◑ P1 `bug` **SR-1** Reproduced: two concurrent publications returned 200/409 but deleted both winning remote IDs. `codex/sr-1-publication-rollback` serializes publication through cleanup; regression verifies winner IDs/current block and one history append, plus release after failure. Next: separate review and required integration checks, then archive on merge.
-- ☐ P1 `bug` **SR-2** Verify deterministic Today finalization without Anthropic; current sync wraps it in `isAnthropicConfigured()` (`app/api/sync/route.ts:841`). Only language should be optional.
+- ◑ P1 `bug` **SR-2** Reproduced missing Today evidence without Anthropic for Ride and VirtualRide. `codex/sr-2-provider-independent-today` removes the deterministic gate and gates only optional language readiness. Regression checks cover evidence, ledger score/fuel, and interval adherence without configuration. Next: required checks and integration, then archive.
 - ☐ P2 `bug` **SR-3** Carry local date through MorningCheckIn's post-change sync refresh; verify at a local/UTC boundary.
 - ☐ P2 `bug` **SR-4** Reject primitive retrospective JSON bodies before property/in-operator access; assert 400 with no writes.
 - ☐ P2 `audit` **SR-5** Replace scheduler-dependent backup-test polling with an explicit fake-filesystem handshake; retain restore/write concurrency assertions. Prior review observed suite-load failures; no new failure run claimed here.

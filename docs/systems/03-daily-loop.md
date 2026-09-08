@@ -50,9 +50,7 @@ let supported self-directed execution inform the model without rewriting the ori
 | `POST /api/analyze` | Optional coach-note language; may also post a NOTE to Intervals.icu when configured |
 | Today | Ride score/evidence, trace, fuel guidance, and disposition controls |
 
-**SR-2:** part of deterministic Today finalization remains inside `isAnthropicConfigured()` in sync.
-LLM-free code does not yet mean the complete daily loop works without provider configuration.
-Acceptance is tracked in [todo](../../todo.md).
+Deterministic Today finalization runs for supported rides with or without Anthropic configuration: zones, interval evidence, trace, score, fuel guidance, and today's ledger enrichment remain available. Only a missing optional coach note sets `analysisPending`, and only when Anthropic is configured.
 
 A compromised disposition excludes the ride from teaching the model. Logged intake `0` means a
 real fasted observation; it is not missing data. Personalized fuel nudges require trusted calibration.
