@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { GenerationVerdict, IntervalsCalendarEvent, RideScoreEntry, WorkoutType } from "@/lib/types";
+import type { CurrentBlock, GenerationVerdict, IntervalsCalendarEvent, RideScoreEntry, WorkoutType } from "@/lib/types";
 import { verdictHash } from "@/lib/publication-gate";
 
 // Integration test for /api/write (RV-9, regression for RV-2). Proves the route's partial-failure
@@ -608,5 +608,58 @@ describe("/api/write publication gate (trust contract)", () => {
     const json = await (await post({ plan, overrideAcknowledged: true })).json();
     expect(json.blockSaved).toBe(true);
     expect(json.currentBlock.publicationOverride).toBeUndefined();
+  });
+});
+
+
+describe("SR-1 concurrent publication", () => {
+  it("releases the publication queue after an unexpected failure", async () => {
+    vi.mocked(store.readGenerationVerdict).mockRejectedValueOnce(new Error("disk unavailable"));
+    allowPlan({ plan });
+    h.createEvent.mockResolvedValue(301);
+    const failed = post({ plan });
+    const retry = post({ plan });
+    await expect(failed).rejects.toThrow("disk unavailable");
+    expect((await (await retry).json()).blockSaved).toBe(true);
+  });
+
+  it("preserves the winning publication's shared remote IDs and archives only once", async () => {
+    const old: CurrentBlock = {
+      goal: "old", lengthWeeks: 1, startDate: "2026-06-14", endDate: "2026-06-14",
+      overview: "", createdAt: "2026-06-01T00:00:00Z",
+      days: [{ date: "2026-06-14", name: "Old ride", type: "Z2", durationMin: 60 }],
+    };
+    let active: CurrentBlock | null = old;
+    vi.mocked(store.readCurrentBlock).mockImplementation(async () => active);
+    vi.mocked(store.updateCurrentBlock).mockImplementation(async (mutate, expected) => {
+      if (active?.createdAt !== expected) return active;
+      active = mutate(active);
+      return active;
+    });
+    allowPlan({ plan });
+    allowPlan({ plan });
+    const remote = new Set<number>();
+    h.createEvent.mockImplementation(async (event) => {
+      const id = event.external_id === "nodevelo-2026-06-15" ? 301 : 302;
+      remote.add(id);
+      return id;
+    });
+    h.deleteEvents.mockImplementation(async (ids: number[]) => {
+      ids.forEach((id) => remote.delete(id));
+      return { deleted: ids, failed: [] };
+    });
+    try {
+      const responses = await Promise.all([
+        post({ plan, expectedBlockCreatedAt: old.createdAt, today: "2026-06-15" }),
+        post({ plan, expectedBlockCreatedAt: old.createdAt, today: "2026-06-15" }),
+      ]);
+      expect(responses.map((r) => r.status).sort()).toEqual([200, 409]);
+      expect([...remote].sort()).toEqual([301, 302]);
+      expect(active?.days.map((d) => d.eventId)).toEqual([301, 302]);
+      expect(store.appendBlockHistory).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.mocked(store.readCurrentBlock).mockResolvedValue(null);
+      vi.mocked(store.updateCurrentBlock).mockImplementation(async (mutate) => mutate(null));
+    }
   });
 });
