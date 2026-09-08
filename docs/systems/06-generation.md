@@ -11,7 +11,7 @@ Generation remains a proposal; nothing reaches Intervals.icu until the athlete a
 - `POST /api/generate` resolves facts, calls the pure compiler, returns `GeneratedPlan`, and persists only the best-effort CAS-guarded season re-plan plus the latest publication verdict.
 - `POST /api/write` matches the submitted plan to that persisted verdict, refuses blockers and unknown/tampered plans, requires explicit acknowledgement for preferences, then writes idempotent `nodevelo-<date>` events and local block state.
 
-Publication-gate refusals precede calendar mutation. Later IO or CAS failures follow separate rollback paths; concurrent rollback ownership is the reported SR-1 defect in [todo](../../todo.md). See [ADR-0015](../DECISIONS.md#adr-0015--the-publication-gate-persists-the-verdict-at-generation-time-and-write-matches-it).
+Publication-gate refusals precede calendar mutation. Publications run in a single-process queue from the initial version check through calendar writes, local persistence, rollback and cleanup. A waiting stale publication therefore returns 409 before upserting shared date IDs or archiving history. Failed requests release the queue. This has the same single-server scope as the JSON-store locks; it is not a cross-process lock. Other block mutations still use the final CAS guard and existing rollback paths. See [ADR-0015](../DECISIONS.md#adr-0015--the-publication-gate-persists-the-verdict-at-generation-time-and-write-matches-it).
 
 ## Pipeline walkthrough (`app/api/generate/route.ts`)
 

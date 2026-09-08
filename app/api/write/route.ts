@@ -42,7 +42,18 @@ function validatePlan(body: unknown): GeneratedPlan | string {
   return plan as unknown as GeneratedPlan;
 }
 
-export async function POST(req: Request) {
+// Calendar upserts share IDs by date. Hold the publication queue from the first version
+// read through rollback/cleanup: a losing publisher must never mutate a winner's events.
+// Like json-store's file locks, this protects the supported single-server process.
+let publicationTail: Promise<unknown> = Promise.resolve();
+
+export function POST(req: Request) {
+  const publication = publicationTail.catch(() => {}).then(() => publish(req));
+  publicationTail = publication.then(() => {}, () => {});
+  return publication;
+}
+
+async function publish(req: Request) {
   if (!isIntervalsConfigured()) {
     return NextResponse.json(
       { error: "Connect Intervals.icu to write this block." },
