@@ -148,5 +148,10 @@ multi-athlete support, wearables or productization. Existing personal-use risk a
 - **Adaptive self-directed coach — Phase 4:** One-time human-reviewed, provenance-bearing
   historical repair through overlays only; never rewrites the ledger or counts as prospective
   effectiveness evidence.
+- **Deterministic interval and intent parsing — redo brainstorming:** Reconstruct the scoping lost
+  in corrupted project chats, using the existing parser, scoring designs and known limitations as
+  the starting point. Capture the agreed requirements, weaknesses and next implementation scope
+  alongside the self-directed work above; this is additional work, not a replacement for the
+  existing segment-grading, terrain-matching or historical-repair items.
 
 Mobile density polish remains evidence-gated. Rejected alternatives stay in [ADR-0012](docs/DECISIONS.md#adr-0012--rejected-alternatives-a-running-log).
