@@ -82,14 +82,6 @@ async function removeWorkspace(workspace: string): Promise<void> {
   }
 }
 
-async function waitForCondition(check: () => boolean, message: string): Promise<void> {
-  for (let attempt = 0; attempt < 50; attempt += 1) {
-    if (check()) return;
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }
-  throw new Error(message);
-}
-
 function makeRestoreFs(
   overrides: Partial<{
     failRenameAt: number[];
@@ -99,6 +91,7 @@ function makeRestoreFs(
     failRmAt: number[];
   }> = {}
 ): RestoreFs & {
+  renamePaused: Promise<void>;
   renameCalls: Array<{ src: string; dest: string }>;
   writeFileCalls: Array<{ file: string; data: string }>;
   rmCalls: Array<string>;
@@ -106,6 +99,7 @@ function makeRestoreFs(
   const renameCalls: Array<{ src: string; dest: string }> = [];
   const writeFileCalls: Array<{ file: string; data: string }> = [];
   const rmCalls: Array<string> = [];
+  const renamePaused = deferred<void>();
   let renameCount = 0;
   let writeCount = 0;
   let rmCount = 0;
@@ -114,6 +108,7 @@ function makeRestoreFs(
   const failRmAt = new Set(overrides.failRmAt ?? []);
 
   return {
+    renamePaused: renamePaused.promise,
     renameCalls,
     writeFileCalls,
     rmCalls,
@@ -123,6 +118,7 @@ function makeRestoreFs(
       renameCount += 1;
       renameCalls.push({ src: String(src), dest: String(dest) });
       if (overrides.pauseRenameAt === renameCount) {
+        renamePaused.resolve();
         await overrides.pauseGate?.promise;
       }
       if (failRenameAt.has(renameCount)) {
@@ -632,31 +628,40 @@ describe("restoreBackupBundle", () => {
     useRestoreRoots(roots);
     await writeLiveState(roots);
     const updateHold = deferred<void>();
+    const updateStarted = deferred<void>();
     const commitHold = deferred<void>();
     const events: string[] = [];
     const io = makeRestoreFs({ pauseRenameAt: 1, pauseGate: commitHold });
+    const operations: Promise<unknown>[] = [];
 
     try {
       const sharedUpdate = updateJsonFile("athlete.json", { ftp: 250, goals: ["keep"] }, async (current) => {
         events.push("update-start");
+        updateStarted.resolve();
         await updateHold.promise;
         events.push("update-end");
         return current;
       });
+      operations.push(sharedUpdate);
 
-      await Promise.resolve();
+      await Promise.race([updateStarted.promise, sharedUpdate]);
+      expect(events).toEqual(["update-start"]);
       const restore = restoreBackupBundle(backupBundle(), { roots, fs: io });
+      operations.push(restore);
       await Promise.resolve();
       expect(io.renameCalls).toHaveLength(0);
 
       updateHold.resolve();
       await sharedUpdate;
-      await waitForCondition(() => io.renameCalls.length === 1, "restore never reached the commit rename");
+      // Observe the actual pause; a slow filesystem must not exhaust a polling budget.
+      // Racing the operation also surfaces an early restore failure instead of hanging.
+      await Promise.race([io.renamePaused, restore]);
       expect(io.renameCalls).toHaveLength(1);
       events.push("rename-held");
 
       const jsonWrite = writeJsonFile("morning-check.json", { ok: false }).then(() => events.push("json-write"));
       const kbWrite = writeKnowledgeFile("nutrition.md", "# Updated").then(() => events.push("kb-write"));
+      operations.push(jsonWrite, kbWrite);
       await Promise.resolve();
       expect(events).toContain("rename-held");
       expect(events).not.toContain("json-write");
@@ -667,7 +672,13 @@ describe("restoreBackupBundle", () => {
       await Promise.all([jsonWrite, kbWrite]);
       expect(events).toContain("json-write");
       expect(events).toContain("kb-write");
+      expect(events.indexOf("update-end")).toBeLessThan(events.indexOf("rename-held"));
+      expect(JSON.parse(await fs.readFile(path.join(roots.dataDir, "morning-check.json"), "utf-8"))).toEqual({ ok: false });
+      expect(await fs.readFile(path.join(roots.knowledgeBaseDir, "nutrition.md"), "utf-8")).toBe("# Updated");
     } finally {
+      updateHold.resolve();
+      commitHold.resolve();
+      await Promise.allSettled(operations);
       await removeWorkspace(workspace);
     }
   });
@@ -680,15 +691,19 @@ describe("restoreBackupBundle", () => {
     const commitHold = deferred<void>();
     const events: string[] = [];
     const io = makeRestoreFs({ pauseRenameAt: 1, pauseGate: commitHold, failRenameAt: [1] });
+    const operations: Promise<unknown>[] = [];
 
     try {
       const restore = restoreBackupBundle(backupBundle(), { roots, fs: io }).catch((error: unknown) => {
         events.push("restore-failed");
         throw error;
       });
-      await waitForCondition(() => io.renameCalls.length === 1, "restore never reached the failing commit rename");
+      operations.push(restore);
+      await Promise.race([io.renamePaused, restore]);
+      expect(io.renameCalls).toHaveLength(1);
       const jsonWrite = writeJsonFile("morning-check.json", { ok: false }).then(() => events.push("json-write"));
       const kbWrite = writeKnowledgeFile("nutrition.md", "# Updated").then(() => events.push("kb-write"));
+      operations.push(jsonWrite, kbWrite);
       await Promise.resolve();
       expect(events).not.toContain("json-write");
       expect(events).not.toContain("kb-write");
@@ -699,7 +714,11 @@ describe("restoreBackupBundle", () => {
       expect(events).toContain("restore-failed");
       expect(events).toContain("json-write");
       expect(events).toContain("kb-write");
+      expect(JSON.parse(await fs.readFile(path.join(roots.dataDir, "morning-check.json"), "utf-8"))).toEqual({ ok: false });
+      expect(await fs.readFile(path.join(roots.knowledgeBaseDir, "nutrition.md"), "utf-8")).toBe("# Updated");
     } finally {
+      commitHold.resolve();
+      await Promise.allSettled(operations);
       await removeWorkspace(workspace);
     }
   });
