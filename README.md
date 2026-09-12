@@ -79,11 +79,10 @@ and sync before generating a block.
 |---|---|
 | `INTERVALS_API_KEY` | Intervals.icu → Settings → Developer |
 | `INTERVALS_ATHLETE_ID` | Athlete ID, e.g. `i12345` |
-| `ANTHROPIC_API_KEY` | Optional commentary and retrospectives; current caveat below |
+| `ANTHROPIC_API_KEY` | Optional ride commentary and retrospective language |
 | `NODEVELO_BACKUP_DIR` | Optional automatic snapshot destination |
 
-**Current caveat:** part of deterministic Today finalization still requires Anthropic configuration
-([SR-2](todo.md)); block generation and deterministic closeout work without it.
+Today ride evidence, block generation, and deterministic closeout work without Anthropic configuration.
 
 State is JSON in `data/` and Markdown in `knowledge-base/`, both gitignored. Optional language calls
 send ride/block context to Anthropic and incur API costs. The server binds to localhost, has no

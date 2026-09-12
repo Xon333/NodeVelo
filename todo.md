@@ -21,7 +21,6 @@ Only its current row is active. A review recommendation is not automatically an 
 [shipment history](docs/history/shipments.md) records their reproductions and verification.
 
 
-The remaining overlapping review finding is **MA-8** (semantic docs/metadata/status drift).
 Duplicate season loading remains a parked proposal; clearing the reliability queue does not activate it. Broad publication,
 ride-finalization and UI refactors remain proposals; the smallest verified fixes own scope.
 
@@ -29,7 +28,6 @@ ride-finalization and UI refactors remain proposals; the smallest verified fixes
 [maintainer audit](docs/reviews/2026-09-05-maintainer-audit.md). MA-1 shipped in PR #110. MA-6/7 resolved: primary edits were backed up and reconciled,
 immutable plans restored, and source-comment rationale retained.
 
-- ☐ P3 `edu` **MA-8** Remaining app metadata/status copy: verify it against deterministic authority. Documentation positioning, route/module counts, and verified stale spec stamps were reconciled in the navigation overhaul; preserve historical decisions.
 
 **Whole-repo hostile review (2026-08-15) — remaining decisions.** Closed findings HR-60…HR-65,
 HR-67, HR-68, HR-70…HR-72 are recorded in [ARCHIVE.md](ARCHIVE.md).

@@ -13,6 +13,16 @@ exact commits.
 ---
 
 
+## MA-8 · App authority and setup copy (2026-09-12)
+
+The page description now describes cycling coaching without attributing block generation to AI.
+README and example environment comments no longer repeat the shipped SR-2 limitation. The sync
+route comment matches deterministic finalization followed by the separate optional language request.
+The privacy disclosure names supported writes back to Intervals.icu instead of calling it a one-way
+pull. Claims were checked against sync, analysis, calendar-mirror, and workout-export callers.
+This closes the remaining MA-8 copy work under the owner's follow-up maintenance authorization;
+no runtime behavior or product gate changed.
+
 ## SR-5 · Backup-test synchronization (2026-09-12)
 
 The fake restore filesystem exposes a promise when its configured rename is paused; both concurrency
