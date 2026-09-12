@@ -1,18 +1,14 @@
 ---
 name: claude-handoff
-description: Hand the current conversation off to a fresh background agent that picks up the work immediately.
+description: Prepare an explicitly requested Claude handoff within the repository's current worker policy.
 argument-hint: "What will the next session be used for?"
 disable-model-invocation: true
 ---
 
-Write a handoff summary of the current conversation so a fresh agent can continue the work. Instead of saving it, launch a background agent seeded with the summary as its prompt: `claude --bg --name "<descriptive name>" "<handoff summary>"`. It starts in the current working directory and returns immediately; the user manages it with `claude agents`.
+# Claude Handoff
 
-Always pass `-n`/`--name` with a descriptive name (e.g. `--name "Fix login bug"`); it sets the display name shown in the job list, session picker, and terminal title.
+Check [worker policy](../../../AGENTS.md#parallel-agent-integration) before acting. NodeVelo has retired Claude implementation until the owner explicitly re-enables it. Invoking this skill alone does not re-enable that workflow or authorize a background worker launch.
 
-Include a "suggested skills" section in the summary, naming which skills the next agent should call the Skill tool for.
+Prepare the requested resume brief using [handoff](../handoff/SKILL.md), tailored to any scope the user supplied. Return a concrete summary with worktree, branch, evidence, and next action; link existing artifacts instead of duplicating them. Redact secrets and personal data.
 
-Do not duplicate content already captured in other artifacts (specs, plans, ADRs, issues, commits, diffs). Reference them by path or URL instead.
-
-Redact any sensitive information, such as API keys, passwords, or personally identifiable information, since the summary becomes the agent's prompt.
-
-If the user passed arguments, treat them as a description of what the next session will focus on and tailor the summary accordingly.
+If the request includes launching Claude while that workflow remains retired, explain the exact policy restriction and provide the prepared brief. If the owner explicitly re-enables and authorizes a launch, follow the then-current worker workflow and available tool documentation; do not infer a CLI command from this skill.
