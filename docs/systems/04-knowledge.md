@@ -20,6 +20,9 @@ Owner module: `lib/kb-loader.ts`. Goals/weakpoints migrated out of markdown into
 
 One file per completed block: `knowledge-base/block-retrospectives/<startDate>_<goal-slug>.md`, written by `POST /api/retrospective` (prose body = optional Claude narrative; frontmatter = the contract below). These files are history only and never enter block compilation.
 
+The closeout endpoint accepts an object body or the legacy empty POST. Malformed non-empty JSON,
+null, primitives, and arrays return 400 before store reads, provider calls, or persistence.
+
 ### Frontmatter contract
 
 Committed reference for the schema (the live `SCHEMA.md` sits inside the gitignored tree): `id`, `goal`, `start_date` / `end_date`, `length_weeks`, `status`, optional early-end fields, execution evidence fields, legacy **`seeds_approved`**, legacy `next_block_seeds` (deterministic evidence-templated closeout priorities), and `generated_at`. The route writes `seeds_approved: false`; acknowledgement flips it to `true` for workflow/history only.

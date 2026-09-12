@@ -1,6 +1,6 @@
 # NodeVelo roadmap
 
-*Updated 2026-09-12 after MA-3, SR-3, and MA-2 reliability repairs; existing queue order retained.*
+*Updated 2026-09-12 after MA-3, SR-3, MA-2, and SR-4 reliability repairs; existing queue order retained.*
 
 ## Follow this queue
 
@@ -12,7 +12,7 @@ and [decision log](docs/DECISIONS.md) still govern product scope.
 | Order | Work | Done when |
 |---:|---|---|
 | 1 — BLOCKED | **FR-6 comparison.** PR #109 merged the harness and MA-4/5 repairs. External credentials, a valid complete comparison, owner scoring, and category decisions remain outstanding. | One consistent protocol, valid measured costs, owner usefulness review, and keep/switch/retire decisions for each of the three language categories; PR integrated or closed with an explicit disposition. |
-| **2 — NEXT** | **Small reliability backlog, one fix at a time:** SR-4 request validation → SR-5 backup-test synchronization. | Each finding has a regression/evidence check and is archived on shipment. No combined cleanup PR. |
+| **2 — NEXT** | **Small reliability backlog, one fix at a time:** SR-5 backup-test synchronization. | Each finding has a regression/evidence check and is archived on shipment. No combined cleanup PR. |
 | 3 | **FR-7**, then **FR-8**, only when their existing entry gates clear. | See package exits below. Do not pre-plan either while earlier work is open. |
 
 SR-1 merged in [PR #116](https://github.com/Xon333/NodeVelo/pull/116); [shipment evidence](docs/history/shipments.md#sr-1--concurrent-publication-rollback-2026-09-08). SR-2 merged in [PR #117](https://github.com/Xon333/NodeVelo/pull/117). FR-6 proceeds only when its missing inputs are available; meanwhile continue the reliability backlog in order.

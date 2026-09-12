@@ -191,6 +191,39 @@ beforeEach(() => {
 });
 
 describe("/api/retrospective POST", () => {
+  it("rejects malformed non-empty JSON without starting closeout", async () => {
+    const res = await POST(new Request("http://localhost/api/retrospective", {
+      method: "POST", body: '{"today":',
+    }));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "Invalid JSON body." });
+    expect(h.readCurrentBlock).not.toHaveBeenCalled();
+    expect(h.generateRetrospective).not.toHaveBeenCalled();
+    expect(h.generateStructuredRetrospective).not.toHaveBeenCalled();
+    expect(h.writeRetrospective).not.toHaveBeenCalled();
+    expect(h.appendBlockHistory).not.toHaveBeenCalled();
+    expect(h.updateCurrentBlock).not.toHaveBeenCalled();
+  });
+
+  it.each([null, 0, 42, "", "value", true, false, [], [{}]].map((value) => ({ value })))(
+    "rejects JSON $value before closeout reads or writes",
+    async ({ value }) => {
+      // Bypass post()'s legacy empty-body convenience so null/false/arrays reach the route verbatim.
+      const res = await POST(new Request("http://localhost/api/retrospective", {
+        method: "POST", body: JSON.stringify(value),
+      }));
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "Request body must be an object." });
+      expect(h.readCurrentBlock).not.toHaveBeenCalled();
+      expect(h.readLastSync).not.toHaveBeenCalled();
+      expect(h.generateRetrospective).not.toHaveBeenCalled();
+      expect(h.generateStructuredRetrospective).not.toHaveBeenCalled();
+      expect(h.writeRetrospective).not.toHaveBeenCalled();
+      expect(h.appendBlockHistory).not.toHaveBeenCalled();
+      expect(h.updateCurrentBlock).not.toHaveBeenCalled();
+    },
+  );
+
   it("builds a BlockHistoryEntry carrying every required field", async () => {
     const res = await post();
     expect(res.status).toBe(200);

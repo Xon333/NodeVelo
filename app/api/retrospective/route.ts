@@ -54,11 +54,15 @@ export async function POST(req: Request) {
   // optional (falls back to UTC) and this keeps the route accepting the same bare POST it always has.
   let body: unknown = {};
   try {
-    body = await req.json();
+    const raw = await req.text();
+    if (raw.trim()) body = JSON.parse(raw);
   } catch {
-    // no body sent — fine
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
-  const b = (body ?? {}) as Record<string, unknown>;
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Request body must be an object." }, { status: 400 });
+  }
+  const b = body as Record<string, unknown>;
   // HR-32: was utcToday() at the archive-truncation call site below — see the identical fix on
   // /api/sync's DELETE and /api/write's POST.
   const today = resolveToday(b.today);

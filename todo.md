@@ -20,7 +20,6 @@ Only its current row is active. A review recommendation is not automatically an 
 was previously local-only and its P1 reports were missing here. Current source still contains the
 reported branches; targeted reproduction is the next action, not another broad audit.
 
-- ☐ P2 `bug` **SR-4** Reject primitive retrospective JSON bodies before property/in-operator access; assert 400 with no writes.
 - ☐ P2 `audit` **SR-5** Replace scheduler-dependent backup-test polling with an explicit fake-filesystem handshake; retain restore/write concurrency assertions. Prior review observed suite-load failures; no new failure run claimed here.
 
 The remaining overlapping review finding is **MA-8** (semantic docs/metadata/status drift).
