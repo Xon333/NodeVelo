@@ -13,6 +13,14 @@ exact commits.
 ---
 
 
+## HR-66 · Historical review preservation (2026-09-12)
+
+Preserved the [August 5 nutrition/workout-library review](../reviews/2026-08-05-pr3-nutrition-workout-library-review.md)
+from closed PR #91 under the owner's autonomous-maintenance authorization. Its Git blob matches the
+source exactly; the review index records the immutable revision and separates dated claims from current
+contracts. No obsolete workflow changes from that PR were restored, and no old findings were activated.
+This completes HR-66's archival task; HR-69 remains a session-handoff task.
+
 ## MA-8 · App authority and setup copy (2026-09-12)
 
 The page description now describes cycling coaching without attributing block generation to AI.

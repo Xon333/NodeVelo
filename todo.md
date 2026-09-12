@@ -32,7 +32,6 @@ immutable plans restored, and source-comment rationale retained.
 **Whole-repo hostile review (2026-08-15) — remaining decisions.** Closed findings HR-60…HR-65,
 HR-67, HR-68, HR-70…HR-72 are recorded in [ARCHIVE.md](ARCHIVE.md).
 
-- ☐ P2 `audit` **HR-66** Historical nutrition/workout-library review survives in [closed PR #91](https://github.com/Xon333/Nodevelo/pull/91). Preserve any unique material during the local cleanup; it is not an active implementation branch.
 - ☐ P3 `edu` **HR-69** `CONTINUE.md` is stale — still says "after P4 COMPLETE… Next: the 'second
   brain' spec work" while the repo is well past that (adaptive-coach P3c, NV-1…14 closed).
   Follow ROADMAP for current work; refresh this only through the handoff workflow.
