@@ -1,6 +1,6 @@
 # NodeVelo roadmap
 
-*Updated 2026-09-12 after MA-3, SR-3, MA-2, and SR-4 reliability repairs; existing queue order retained.*
+*Updated 2026-09-12 after the scoped reliability backlog completed; FR-6 remains evidence-blocked.*
 
 ## Follow this queue
 
@@ -12,16 +12,17 @@ and [decision log](docs/DECISIONS.md) still govern product scope.
 | Order | Work | Done when |
 |---:|---|---|
 | 1 — BLOCKED | **FR-6 comparison.** PR #109 merged the harness and MA-4/5 repairs. External credentials, a valid complete comparison, owner scoring, and category decisions remain outstanding. | One consistent protocol, valid measured costs, owner usefulness review, and keep/switch/retire decisions for each of the three language categories; PR integrated or closed with an explicit disposition. |
-| **2 — NEXT** | **Small reliability backlog, one fix at a time:** SR-5 backup-test synchronization. | Each finding has a regression/evidence check and is archived on shipment. No combined cleanup PR. |
+| 2 — COMPLETE | **Small reliability backlog:** MA-3, SR-3, MA-2, SR-4, and SR-5 shipped separately. | Regressions and shipment evidence are recorded in [history](docs/history/shipments.md). |
 | 3 | **FR-7**, then **FR-8**, only when their existing entry gates clear. | See package exits below. Do not pre-plan either while earlier work is open. |
 
-SR-1 merged in [PR #116](https://github.com/Xon333/NodeVelo/pull/116); [shipment evidence](docs/history/shipments.md#sr-1--concurrent-publication-rollback-2026-09-08). SR-2 merged in [PR #117](https://github.com/Xon333/NodeVelo/pull/117). FR-6 proceeds only when its missing inputs are available; meanwhile continue the reliability backlog in order.
+SR-1 merged in [PR #116](https://github.com/Xon333/NodeVelo/pull/116); [shipment evidence](docs/history/shipments.md#sr-1--concurrent-publication-rollback-2026-09-08). SR-2 merged in [PR #117](https://github.com/Xon333/NodeVelo/pull/117). FR-6 proceeds only when its missing inputs are available. The reliability fallback is complete; no further implementation task is ready under the existing gates.
 [Evidence/dispositions](docs/reviews/README.md) · [Defect acceptance](todo.md)
 
 During the freeze, normal riding and FR-9 recording are the only default parallel lane. Newly
 demonstrated P1 failures may interrupt; other ideas do not reorder the queue. At task end, record
 merged/disproved/blocked status and advance. If FR-6 needs credentials or owner scoring, state the
-blocker and continue with the small reliability backlog without marking Phase 3 complete.
+blocker without marking Phase 3 complete. The reliability fallback is now exhausted; normal riding
+and FR-9 recording remain available, but other implementation requires cleared gates or explicit scope.
 
 ## State of the app
 

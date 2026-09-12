@@ -16,14 +16,13 @@ P2 high-value UX/feature · P3 polish/education · Type: `bug` `ux` `feat` `audi
 **Execution order is owned by [ROADMAP → Follow this queue](ROADMAP.md#follow-this-queue).**
 Only its current row is active. A review recommendation is not automatically an implementation task.
 
-**September 2 review reconciliation (2026-09-07).** The [source review](docs/reviews/2026-09-02-code-and-app-state-review.md)
-was previously local-only and its P1 reports were missing here. Current source still contains the
-reported branches; targeted reproduction is the next action, not another broad audit.
+**September 2 review reconciliation (2026-09-12).** The scoped reliability findings from the
+[source review](docs/reviews/2026-09-02-code-and-app-state-review.md) are repaired;
+[shipment history](docs/history/shipments.md) records their reproductions and verification.
 
-- ☐ P2 `audit` **SR-5** Replace scheduler-dependent backup-test polling with an explicit fake-filesystem handshake; retain restore/write concurrency assertions. Prior review observed suite-load failures; no new failure run claimed here.
 
 The remaining overlapping review finding is **MA-8** (semantic docs/metadata/status drift).
-Duplicate season loading is measured but parked until the correctness queue clears. Broad publication,
+Duplicate season loading remains a parked proposal; clearing the reliability queue does not activate it. Broad publication,
 ride-finalization and UI refactors remain proposals; the smallest verified fixes own scope.
 
 **Maintainer audit (2026-09-05).** Full evidence, locations, smallest fixes and verification:

@@ -13,7 +13,21 @@ exact commits.
 ---
 
 
+## SR-5 · Backup-test synchronization (2026-09-12)
+
+The fake restore filesystem exposes a promise when its configured rename is paused; both concurrency
+tests await that handshake instead of exhausting 50 zero-delay timer turns. The shared-update test
+also waits for its mutator to start. Cleanup releases held gates and settles started operations before
+removing fixtures, and both tests check queued JSON and knowledge writes survive the restore.
+
+The natural suite-load failure did not recur during this pass. A temporary 150 ms delay before rename
+reproduced the old polling failure; both repaired concurrency cases passed with the same delay. The
+probe was removed before shipment. All 20 backup tests and the full 2,640-test application suite pass.
+Production persistence behavior is unchanged.
+
 ## SR-4 · Retrospective request-body validation (2026-09-12)
+
+Merged in [PR #123](https://github.com/Xon333/NodeVelo/pull/123).
 
 Retrospective closeout rejects null, primitives, arrays, and malformed non-empty JSON before reads,
 provider calls, or writes. The legacy empty POST remains accepted. Nine shape cases first reproduced
@@ -24,6 +38,8 @@ provider prompts, and provider calls are unchanged.
 
 ## MA-2 · Profile section-container validation (2026-09-12)
 
+Merged in [PR #122](https://github.com/Xon333/NodeVelo/pull/122).
+
 Profile rejects null, primitive, and array `nutrition`/`performance` containers before field access
 or persistence. Fourteen route regressions first reproduced thrown null requests and accepted invalid
 containers with valid sibling goals, then passed with 400 responses and no update calls. All 41 Profile
@@ -32,12 +48,16 @@ no runtime files written. Valid partial updates and existing field validation re
 
 ## SR-3 · Morning-change local-date refresh (2026-09-12)
 
+Merged in [PR #121](https://github.com/Xon333/NodeVelo/pull/121).
+
 MorningCheckIn reuses the Apply action's local date in the subsequent sync GET. Component regressions
 with the real SyncProvider first showed the wrong refreshed date in Ljubljana and Los Angeles on
 opposite sides of the UTC boundary, then passed after the fix. The focused component, sync-provider,
 and date suites passed 21 tests. No calendar-mutation or date-resolution policy changed.
 
 ## MA-3 · Private runtime trace isolation (2026-09-12)
+
+Merged in [PR #120](https://github.com/Xon333/NodeVelo/pull/120).
 
 Next.js production traces exclude `data/` and `knowledge-base/`, retaining shipped knowledge defaults.
 The build regression first reproduced 104 references to four synthetic private files, then passed with
