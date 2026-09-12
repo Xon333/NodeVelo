@@ -31,7 +31,6 @@ ride-finalization and UI refactors remain proposals; the smallest verified fixes
 [maintainer audit](docs/reviews/2026-09-05-maintainer-audit.md). MA-1 shipped in PR #110. MA-6/7 resolved: primary edits were backed up and reconciled,
 immutable plans restored, and source-comment rationale retained.
 
-- ☐ P2 `bug` **MA-2** Reject null/primitive Profile section containers before property reads; current null nutrition/performance requests return 500.
 - ☐ P3 `edu` **MA-8** Remaining app metadata/status copy: verify it against deterministic authority. Documentation positioning, route/module counts, and verified stale spec stamps were reconciled in the navigation overhaul; preserve historical decisions.
 
 **Whole-repo hostile review (2026-08-15) — remaining decisions.** Closed findings HR-60…HR-65,

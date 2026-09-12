@@ -256,6 +256,12 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
   const b = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+  for (const section of ["nutrition", "performance"] as const) {
+    const input = b[section];
+    if (input !== undefined && (input === null || typeof input !== "object" || Array.isArray(input))) {
+      return NextResponse.json({ error: `${section} must be an object.` }, { status: 400 });
+    }
+  }
 
   // HR-50: validate BEFORE the locked update below — a 400 here must never touch the lock, and the
   // mutator handed to updateAthleteProfile is a pure merge with no failure path of its own.
