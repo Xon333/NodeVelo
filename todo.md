@@ -24,7 +24,7 @@ reported branches; targeted reproduction is the next action, not another broad a
 - ☐ P2 `bug` **SR-4** Reject primitive retrospective JSON bodies before property/in-operator access; assert 400 with no writes.
 - ☐ P2 `audit` **SR-5** Replace scheduler-dependent backup-test polling with an explicit fake-filesystem handshake; retain restore/write concurrency assertions. Prior review observed suite-load failures; no new failure run claimed here.
 
-Overlapping review findings are **MA-3** (tracing) and **MA-8** (semantic docs/metadata/status drift).
+The remaining overlapping review finding is **MA-8** (semantic docs/metadata/status drift).
 Duplicate season loading is measured but parked until the correctness queue clears. Broad publication,
 ride-finalization and UI refactors remain proposals; the smallest verified fixes own scope.
 
@@ -33,9 +33,6 @@ ride-finalization and UI refactors remain proposals; the smallest verified fixes
 immutable plans restored, and source-comment rationale retained.
 
 - ☐ P2 `bug` **MA-2** Reject null/primitive Profile section containers before property reads; current null nutrition/performance requests return 500.
-- ☐ P2 `audit` **MA-3** Exclude private runtime roots from production traces and add synthetic-canary build assertions (52 references reproduced).
-- ◑ P2 `bug` **MA-4** PR #109: reproduced and repaired missing/partial successful usage; unknown spend stays reserved and blocks cost eligibility. Required integration checks are next.
-- ◑ P2 `bug` **MA-5** PR #109: reproduced and repaired independent category selection, with complete-corpus and combined-cost gates. Required integration checks are next.
 - ☐ P3 `edu` **MA-8** Remaining app metadata/status copy: verify it against deterministic authority. Documentation positioning, route/module counts, and verified stale spec stamps were reconciled in the navigation overhaul; preserve historical decisions.
 
 **Whole-repo hostile review (2026-08-15) — remaining decisions.** Closed findings HR-60…HR-65,

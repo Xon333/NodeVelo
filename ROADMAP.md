@@ -1,6 +1,6 @@
 # NodeVelo roadmap
 
-*Updated 2026-09-08 after SR-1 and SR-2 merged; existing queue order retained.*
+*Updated 2026-09-12 for MA-3 trace isolation and PR #109 disposition; existing queue order retained.*
 
 ## Follow this queue
 
@@ -11,8 +11,8 @@ and [decision log](docs/DECISIONS.md) still govern product scope.
 
 | Order | Work | Done when |
 |---:|---|---|
-| 1 — BLOCKED | **FR-6 comparison in PR #109.** MA-4/5 are repaired; integration checks are next. External credentials and owner scoring remain unavailable. | One consistent protocol, valid measured costs, owner usefulness review, and keep/switch/retire decisions for each of the three language categories; PR integrated or closed with an explicit disposition. |
-| **2 — NEXT** | **Small reliability backlog, one fix at a time:** MA-3 tracing → SR-3 local date → MA-2/SR-4 request validation → SR-5 backup-test synchronization. | Each finding has a regression/evidence check and is archived on shipment. No combined cleanup PR. |
+| 1 — BLOCKED | **FR-6 comparison.** PR #109 merged the harness and MA-4/5 repairs. External credentials, a valid complete comparison, owner scoring, and category decisions remain outstanding. | One consistent protocol, valid measured costs, owner usefulness review, and keep/switch/retire decisions for each of the three language categories; PR integrated or closed with an explicit disposition. |
+| **2 — NEXT** | **Small reliability backlog, one fix at a time:** SR-3 local date → MA-2/SR-4 request validation → SR-5 backup-test synchronization. | Each finding has a regression/evidence check and is archived on shipment. No combined cleanup PR. |
 | 3 | **FR-7**, then **FR-8**, only when their existing entry gates clear. | See package exits below. Do not pre-plan either while earlier work is open. |
 
 SR-1 merged in [PR #116](https://github.com/Xon333/NodeVelo/pull/116); [shipment evidence](docs/history/shipments.md#sr-1--concurrent-publication-rollback-2026-09-08). SR-2 merged in [PR #117](https://github.com/Xon333/NodeVelo/pull/117). FR-6 proceeds only when its missing inputs are available; meanwhile continue the reliability backlog in order.
@@ -26,7 +26,8 @@ blocker and continue with the small reliability backlog without marking Phase 3 
 ## State of the app
 
 Deterministic compilation, publication checks, restore safeguards, the early-closeout correction,
-and intent retries are shipped. PR #113 aligned docs and helpers. PR #109 remains unfinished;
+and intent retries are shipped. MA-3 excludes private runtime files from production traces.
+PR #113 aligned docs and helpers. PR #109 merged the harness; FR-6 comparison remains unfinished;
 primary-checkout residue is reconciled: original files are preserved in a local recovery bundle,
 unique reports remain historical reference, and the primary checkout syncs cleanly. [Shipment history](docs/history/shipments.md)
 
