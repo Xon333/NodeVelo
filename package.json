@@ -7,6 +7,7 @@
     "dev:lan": "next dev -H 0.0.0.0",
     "dev:preview": "next dev -H 127.0.0.1 -p 3100",
     "build": "next build",
+    "check:private-traces": "node scripts/check-private-traces.mjs",
     "start": "next start -H 127.0.0.1",
     "lint": "eslint --max-warnings 0",
     "test": "vitest run",

@@ -13,6 +13,21 @@ exact commits.
 ---
 
 
+## MA-3 · Private runtime trace isolation (2026-09-12)
+
+Next.js production traces exclude `data/` and `knowledge-base/`, retaining shipped knowledge defaults.
+The build regression first reproduced 104 references to four synthetic private files, then passed with
+zero private references across all 38 manifests. Production HTTP smoke checks verified external data
+and knowledge reads and shipped KB fallback. CI now runs `check:private-traces` so clean checkouts
+exercise this boundary. This repairs packaging; it does not claim an HTTP disclosure occurred.
+
+## MA-4 / MA-5 · Experiment accounting and category eligibility (2026-09-08)
+
+Merged with the harness in [PR #109](https://github.com/Xon333/NodeVelo/pull/109). Unknown successful
+usage remains reserved and ineligible for measured cost; complete category arms can use different
+models subject to complete-corpus and combined-cost gates. [Experiment evidence](../reviews/2026-09-01-fr6-language-provider-experiment.md)
+retains the incomplete comparison and outstanding owner scoring. FR-6 is not closed by harness shipment.
+
 ## SR-2 · Provider-independent Today finalization (2026-09-08)
 
 Merged in [PR #117](https://github.com/Xon333/NodeVelo/pull/117). Ride and VirtualRide sync now build deterministic Today evidence and enrich today's ledger without an Anthropic key. Only optional coach-note readiness depends on configuration. Regression tests first reproduced missing Today analysis, then verified score/fuel and interval-adherence enrichment without the provider. All 98 sync-route tests and required integration checks passed; GitHub CI passed. Production language prompts and provider calls were unchanged.

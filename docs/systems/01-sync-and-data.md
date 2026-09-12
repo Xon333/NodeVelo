@@ -88,6 +88,11 @@ The version token is `CurrentBlock.createdAt` itself, not a dedicated version/et
 
 ## Cross-cutting
 
+- **Production packaging**: `next.config.ts` excludes athlete-owned `data/` and `knowledge-base/`
+  from output file traces. These remain runtime stores; `NODEVELO_DATA_DIR` and `NODEVELO_KB_DIR`
+  can point outside the checkout. Committed `knowledge-base-defaults/` remains a shipped asset.
+  `npm run check:private-traces` builds with synthetic private canaries, checks every trace manifest,
+  and exercises external runtime reads plus default KB fallback through a production server. CI runs it.
 - **CSRF** (`lib/csrf.ts` via root `proxy.ts` — Next 16's renamed middleware): same-origin guard on all `/api/*` writes. This is the app's **only** request-level defense — there is no auth; the app binds to localhost.
 - **Backup**: `/api/export` (bundle download: all `data/*.json` + `knowledge-base/**/*.md`), `/api/import` (validated exact restore of the managed `data/` + `knowledge-base/` trees; rejects partial success and preserves the accepted crash boundary), `snapshotBackup` auto-snapshots on sync when `NODEVELO_BACKUP_DIR` is set.
 - **Logging**: `lib/log.ts` — one JSON line per error/warn with `{route, step, status}`; no framework.
