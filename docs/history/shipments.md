@@ -13,6 +13,15 @@ exact commits.
 ---
 
 
+## SR-4 · Retrospective request-body validation (2026-09-12)
+
+Retrospective closeout rejects null, primitives, arrays, and malformed non-empty JSON before reads,
+provider calls, or writes. The legacy empty POST remains accepted. Nine shape cases first reproduced
+throws or accepted closeouts; a separate malformed-JSON case reproduced an accepted closeout.
+All 53 route tests pass after repair, including empty-body compatibility. Production build and ten
+same-origin HTTP cases confirmed 400 responses with no runtime files written. Valid closeout behavior,
+provider prompts, and provider calls are unchanged.
+
 ## MA-2 · Profile section-container validation (2026-09-12)
 
 Profile rejects null, primitive, and array `nutrition`/`performance` containers before field access
