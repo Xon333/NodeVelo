@@ -13,6 +13,14 @@ exact commits.
 ---
 
 
+## MA-2 · Profile section-container validation (2026-09-12)
+
+Profile rejects null, primitive, and array `nutrition`/`performance` containers before field access
+or persistence. Fourteen route regressions first reproduced thrown null requests and accepted invalid
+containers with valid sibling goals, then passed with 400 responses and no update calls. All 41 Profile
+route tests passed. A production build and 14 same-origin HTTP requests confirmed 400 responses with
+no runtime files written. Valid partial updates and existing field validation remain unchanged.
+
 ## SR-3 · Morning-change local-date refresh (2026-09-12)
 
 MorningCheckIn reuses the Apply action's local date in the subsequent sync GET. Component regressions

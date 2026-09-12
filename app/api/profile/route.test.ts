@@ -310,6 +310,16 @@ describe("GET /api/profile — day-type split confidence gate (DT Task 6)", () =
   });
 });
 
+describe.each(["nutrition", "performance"])("PUT /api/profile — %s container", (section) => {
+  it.each([null, 42, "value", true, false, [], [{}]].map((value) => ({ value })))("rejects $value without writing valid sibling fields", async ({ value }) => {
+    seedCurrentProfile(base());
+    const res = await put({ [section]: value, goals: [{ goal: "New goal", target: "", focus: "general" }] });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: `${section} must be an object.` });
+    expect(updateMock()).not.toHaveBeenCalled();
+  });
+});
+
 describe("PUT /api/profile — nutrition", () => {
   it("rejects a non-positive baseCalories/restDayTarget/targetWeightKg without writing", async () => {
     seedCurrentProfile(base());

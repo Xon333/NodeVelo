@@ -140,6 +140,10 @@ Profile exposes RMR → calibration → maintenance → smoothed weight → goal
 Show the calculated value and RMR-floored result when the floor applies. Today presents the daily
 prescription and relevant logging signals.
 
+Profile PUT accepts `nutrition` and `performance` only as non-null, non-array objects when present.
+Invalid section containers return 400 before any profile update, even when sibling fields are valid;
+valid partial updates continue through the existing field validation and locked merge.
+
 ## Known rough edges
 
 These are recorded sensitivities, not universal accuracy claims.
