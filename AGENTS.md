@@ -36,6 +36,12 @@ Continue authorized work through ordinary context compaction. Use a handoff only
 
 Use affected checks while developing and complete required integration checks. Reuse passing evidence while relevant files and the environment are unchanged; rerun when changes or unresolved concerns justify it. Report unavailable checks or baseline failures accurately.
 
+# Communication
+
+Use plain, precise language in task updates, final answers, PR descriptions, and agent-facing documentation. Lead with the outcome or decision, then explain the evidence and practical effect. Default to concise connected prose; use lists, tables, or headings when they make steps or comparisons easier to follow. Follow the user's requested format and retain necessary domain terminology.
+
+Explain technical details only when they help the reader assess the work. Avoid stock AI phrases, invented jargon, repeated summaries, and unprompted contrasts such as "this is not X, it is Y." For changes, state what changed, why, how it was verified, and material limitations. Distinguish observed results from expectations, and pending work from completion. Progress updates should convey a finding, uncertainty, or next action rather than narrating routine commands. Keep messages between agents equally readable.
+
 # Recurring bug classes — check before shipping
 
 Check these on relevant changes:

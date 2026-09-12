@@ -1,6 +1,6 @@
 ---
 name: migrate-to-shoehorn
-description: Migrate test files from `as` type assertions to @total-typescript/shoehorn. Use when user mentions shoehorn, wants to replace `as` in tests, or needs partial test data.
+description: Migrate test assertions to @total-typescript/shoehorn when the user requests that migration or shoehorn-based fixtures.
 ---
 
 # Migrate to Shoehorn
@@ -20,7 +20,7 @@ Problems with `as` in tests:
 ## Install
 
 ```bash
-npm i @total-typescript/shoehorn
+npm install --save-dev @total-typescript/shoehorn
 ```
 
 ## Migration patterns
@@ -104,15 +104,7 @@ getUser(fromAny({ body: { id: 123 } }));
 
 ## Workflow
 
-1. **Gather requirements** - ask user:
-   - What test files have `as` assertions causing problems?
-   - Are they dealing with large objects where only some properties matter?
-   - Do they need to pass intentionally wrong data for error testing?
-
-2. **Install and migrate**:
-   - [ ] Install: `npm i @total-typescript/shoehorn`
-   - [ ] Find test files with `as` assertions: `grep -r " as [A-Z]" --include="*.test.ts" --include="*.spec.ts"`
-   - [ ] Replace `as Type` with `fromPartial()`
-   - [ ] Replace `as unknown as Type` with `fromAny()`
-   - [ ] Add imports from `@total-typescript/shoehorn`
-   - [ ] Run type check to verify
+1. Inspect the requested test files, existing fixtures, and dependency manifest. Infer whether each assertion represents partial data or deliberately invalid input from the test's purpose. Ask only when the migration scope or intended behavior cannot be established from the request and code. A generic need for partial test data does not authorize introducing this dependency or a repository-wide migration.
+2. Use the repository's package manager and dependency conventions. Install shoehorn only if needed for the authorized migration, as a test/development dependency. Check its installed API before applying the examples above.
+3. Search the scoped test files with `rg`, preserve their behavioral assertions, and migrate only the relevant type assertions. Do not mechanically replace unrelated casts or change production code.
+4. Run the affected tests and typecheck. Follow [completion policy](../../../AGENTS.md#completion-and-decisions) and [WORKFLOW](../../../WORKFLOW.md#codex-workflow) for the remaining integration checks and finish.
