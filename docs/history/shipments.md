@@ -13,6 +13,23 @@ exact commits.
 ---
 
 
+## Dependency security maintenance (2026-09-12)
+
+Under the owner's follow-up autonomous-maintenance scope, updated Next.js and its ESLint config
+from 16.2.9 to [16.3.5](https://github.com/vercel/next.js/releases/tag/v16.3.5), Vitest from 4.1.8 to
+4.1.11, and affected transitive dependencies within their declared ranges. This includes the
+[Next.js image-optimizer fix](https://github.com/advisories/GHSA-2xp9-vwfh-vxw4) and
+[Vitest mock-server fix](https://github.com/advisories/GHSA-82fw-gwwq-j7x9).
+No application behavior or product gate changed.
+
+The npm audit moved from 11 affected packages (3 moderate, 7 high, 1 critical) to zero reported
+vulnerabilities on this date. A clean install with the existing npm 10 toolchain and the complete
+dependency tree check passed. All 2,640 application tests pass; the existing opt-in live experiment
+remains skipped. Typecheck, lint, workflow/sync tests, and documentation links pass. A production
+build and HTTP smoke confirmed seven app pages render, external runtime data and knowledge remain
+readable, and shipped knowledge defaults remain available. All 38 trace manifests exclude private
+runtime files. These HTTP checks cover server rendering, not interactive browser behavior.
+
 ## HR-66 · Historical review preservation (2026-09-12)
 
 Preserved the [August 5 nutrition/workout-library review](../reviews/2026-08-05-pr3-nutrition-workout-library-review.md)
