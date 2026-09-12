@@ -18,8 +18,8 @@ export default function DataPrivacyCard() {
         </li>
         <li>
           Everything else — scoring, nutrition, readiness, scheduling, and backup — runs without
-          Anthropic. Intervals.icu is a one-way pull and the system of record; accepted plans mirror
-          to its calendar.
+          Anthropic. Intervals.icu supplies ride and physiology data; accepted plans, confirmed calendar
+          changes, workout exports, and configured coach notes can be sent back.
         </li>
       </ul>
     </Card>

@@ -29,7 +29,7 @@ const warriot = localFont({
 
 export const metadata: Metadata = {
   title: "NodeVelo",
-  description: "AI-powered training block generator on top of Intervals.icu.",
+  description: "Personal cycling coaching with training blocks, ride feedback, and fueling guidance built on Intervals.icu.",
 };
 
 export default function RootLayout({

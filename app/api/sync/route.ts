@@ -310,8 +310,8 @@ export async function GET(req: Request) {
   });
 }
 
-// POST pulls fresh data from Intervals.icu, then (if a ride happened today)
-// runs a short Claude analysis comparing actual vs planned.
+// POST pulls fresh data from Intervals.icu and finalizes today's deterministic ride evidence.
+// The client requests optional coach-note language separately through /api/analyze.
 export async function POST(req: Request) {
   if (!isIntervalsConfigured()) {
     return NextResponse.json(
