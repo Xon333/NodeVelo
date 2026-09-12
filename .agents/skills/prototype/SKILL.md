@@ -16,6 +16,12 @@ Identify which question is being answered, using the user's prompt, the surround
 
 The two branches produce very different artifacts, so getting this wrong wastes the whole prototype. If the question is genuinely ambiguous and the user isn't reachable, default to whichever branch better matches the surrounding code (a backend module → logic; a page or component → UI) and state the assumption at the top of the prototype.
 
+## Completion boundary
+
+A prototype-only request ends with a runnable, inspected artifact, how to open it, and the question it answered or the feedback still needed. Selecting a variant is not by itself authorization to change production behavior. If implementation is already authorized, continue with appropriate production validation and [WORKFLOW](../../../WORKFLOW.md#codex-workflow); otherwise preserve the prototype and report findings.
+
+Use the sanctioned task worktree for repository code. Keep experimental code off integration branches; a prototype-only request does not require publishing or merging it. Preserve its worktree and link the artifact in the final response, or in the existing tracker when that update is authorized. Do not create a separate branch naming convention or force a session handoff.
+
 ## Rules that apply to both
 
 1. **Throwaway from day one, and clearly marked as such.** Locate the prototype code close to where it will actually be used (next to the module or page it's prototyping for) so context is obvious, but name it so a casual reader can see it's a prototype, not production. For throwaway UI routes, obey whatever routing convention the project already uses; don't invent a new top-level structure.
@@ -23,4 +29,4 @@ The two branches produce very different artifacts, so getting this wrong wastes 
 3. **No persistence by default.** State lives in memory. Persistence is the thing the prototype is _checking_, not something it should depend on. If the question explicitly involves a database, hit a scratch DB or a local file with a clear "PROTOTYPE, wipe me" name.
 4. **Skip the polish.** No tests, no error handling beyond what makes the prototype _runnable_, no abstractions. The point is to learn something fast.
 5. **Surface the state.** After every action (logic) or on every variant switch (UI), print or render the full relevant state so the user can see what changed.
-6. **Capture it when done.** Fold any validated decision into the real code, then capture the prototype itself as a **primary source**: commit it to a throwaway branch, out of main, and leave a context pointer to that branch on the implementation issue. Capture the answer too (the verdict and the question it settled) in the issue or a commit. The main branch keeps only the validated decision.
+6. **Capture it when done.** Record the question, observations, and any selected option. Retain the prototype as evidence in its isolated worktree. Apply the completion boundary above before promoting any logic or UI into production.
