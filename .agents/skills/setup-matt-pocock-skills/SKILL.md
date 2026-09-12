@@ -6,7 +6,9 @@ disable-model-invocation: true
 
 # Setup Matt Pocock's Skills
 
-Scaffold the per-repo configuration that the engineering skills assume:
+NodeVelo is already configured. For this repository, inspect the relevant files in `docs/agents/` and change only the requested configuration. [AGENTS](../../../AGENTS.md) owns policy, `CLAUDE.md` imports it, and [domain documentation](../../../docs/agents/domain.md) maps glossary and decisions to their existing owners. Preserve those owners and formats; do not rerun the generic first-time setup below or ask the user to reconfirm settled choices.
+
+For a repository without an established configuration, scaffold the per-repo configuration that the engineering skills assume:
 
 - **Issue tracker**: where issues live (GitHub by default; local markdown is also supported out of the box)
 - **Triage labels**: the strings used for the five canonical triage roles

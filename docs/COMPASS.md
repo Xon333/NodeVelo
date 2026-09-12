@@ -57,8 +57,8 @@ Change procedures: [Recipes](RECIPES.md). Vocabulary: [Glossary](GLOSSARY.md).
 ## Session rituals
 
 1. Identify checkout, local changes, and integrated revision ([dirty-checkout procedure](../WORKFLOW.md#dirty-primary-checkout)).
-2. Read the task's system doc and relevant [invariants](INVARIANTS.md); inspect the actual inputs and consumers.
-3. Verify the result, update its owning doc below, and finish through [Workflow](../WORKFLOW.md#codex-workflow).
+2. For subsystem changes, read the relevant system doc and affected [invariants](INVARIANTS.md), then inspect inputs and consumers. For prose or workflow changes, use the owning document below; unrelated system reading is unnecessary.
+3. Verify the requested result and update its owning doc when needed. Finish implementation through [Workflow](../WORKFLOW.md#codex-workflow); plan-only and review-only requests end with their artifact.
 
 ## Documentation ownership
 
