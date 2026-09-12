@@ -15,6 +15,8 @@ provides shared state; [scoring](02-scoring-and-learning.md) and [nutrition](09-
 Readiness is advisory. The illness/fatigue/injury check-in can change a planned session only after
 confirmation: injury → rest; illness/fatigue → downgrade quality or rest on an easy day.
 `morning-check.ts` owns the decision, `calendar-mirror.ts` the outbound change.
+MorningCheckIn captures the browser-local date when applying a change and reuses it for the
+following sync GET, so the shared state refresh describes the same day as the mutation.
 
 ### Self-directed training with Intervals.icu
 

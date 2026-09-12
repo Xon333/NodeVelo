@@ -13,6 +13,13 @@ exact commits.
 ---
 
 
+## SR-3 · Morning-change local-date refresh (2026-09-12)
+
+MorningCheckIn reuses the Apply action's local date in the subsequent sync GET. Component regressions
+with the real SyncProvider first showed the wrong refreshed date in Ljubljana and Los Angeles on
+opposite sides of the UTC boundary, then passed after the fix. The focused component, sync-provider,
+and date suites passed 21 tests. No calendar-mutation or date-resolution policy changed.
+
 ## MA-3 · Private runtime trace isolation (2026-09-12)
 
 Next.js production traces exclude `data/` and `knowledge-base/`, retaining shipped knowledge defaults.

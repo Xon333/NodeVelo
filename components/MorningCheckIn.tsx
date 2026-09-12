@@ -128,9 +128,10 @@ export default function MorningCheckIn() {
   const apply = async () => {
     setBusy(true);
     setActionError(null);
+    const today = localToday();
     try {
-      const r = await api<{ note: string }>("/api/morning-check", { method: "PUT", body: JSON.stringify({ today: localToday() }) });
-      const fresh = await api<AppState>("/api/sync"); // refresh so the block calendar reflects the move
+      const r = await api<{ note: string }>("/api/morning-check", { method: "PUT", body: JSON.stringify({ today }) });
+      const fresh = await api<AppState>(`/api/sync?today=${today}`); // refresh the same local day that was changed
       setState(fresh);
       setAppliedNote(r.note); // what actually happened — may differ from the pre-apply preview
     } catch (err) {
