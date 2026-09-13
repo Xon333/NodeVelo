@@ -6,6 +6,7 @@ implementation. Closed findings remain in their original reports as historical e
 
 | Record | Disposition |
 |---|---|
+| [September 13 demo consolidation](2026-09-13-demo-consolidation.md) | Owner inputs and local demo work compared with GitHub; dated evidence, not authorization to merge the demo or reopen the queue |
 | [August 20 adversarial review](2026-08-20-nodevelo-adversarial-investment-review.md) | Accepted freeze charter; current package status is in ROADMAP |
 | [Publication/cycle evidence](2026-08-24-publication-gate-evidence.md) | Continuing FR-9 evidence log; real attended cycles only |
 | [September 2 code/app review](2026-09-02-code-and-app-state-review.md) | Findings routed as SR/MA IDs; reproduction status is in todo |
