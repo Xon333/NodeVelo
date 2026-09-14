@@ -103,7 +103,6 @@ One line per file that matters. The authoritative per-file table — README keep
 | `anthropic-prompts.ts` | Pure/offline-testable ride-analysis and retrospective prompt assembly; no block-generation prompts |
 | `tool-schema.ts` | The one zod→tool-schema bridge. No test file |
 | `retrospective-schema.ts` | Structured-reflection tool schema for optional retrospective history notes |
-| `overview-check.ts` | Historical deterministic overview-vs-schedule consistency helper; no active generation caller |
 | `plan-parser.ts` | Mostly retired; live part = `planDayToEvent` calendar converter |
 | `workout-validate.ts` | KB-grounded protocol validator (`splitPlanProtocol` → violations/hazards/advisories) |
 | `publication-gate.ts` | The one publication gate: runs every generation validator exactly once, buckets findings by emitter into blockers/preferences/advisories; `canonical` + `verdictHash` behind the persisted verdict. Change when a validator's severity needs classifying ([RECIPES § validators](RECIPES.md#add-or-change-a-validator)) |

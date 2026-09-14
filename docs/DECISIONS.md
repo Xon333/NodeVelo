@@ -46,6 +46,14 @@ Why NodeVelo is built the way it is — standing architectural decisions in one 
 
 **Amendment (2026-08-30, FR-5).** New plans are compiled directly from typed prescriptions, so neither repair is in the active generation path. Generated cycling workouts must render/parse with semantic equality before the warn-only publication gate runs.
 
+**Amendment (2026-09-14, DS-7).** Retired `lib/overview-check.ts` and its dedicated tests after
+confirming FR-5 removed its generation caller in PR #107. The compiler builds a short overview
+from block length, focus, and phase; the old checker inspected free-form claims about weekly hours,
+session types, and long rides. It had no remaining production consumer. The compiler's overview
+regression and publication gate remain in place. The August 27 amendment above describes the
+historical pipeline; [shipment evidence](history/shipments.md#ds-7--retire-the-unused-overview-checker-2026-09-14)
+records retirement.
+
 ---
 
 ## ADR-0005 · Fast sync; deferred LLM analysis
