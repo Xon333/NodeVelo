@@ -44,12 +44,19 @@ Navigation (`components/Nav.tsx`): three tiers — primary (Today/Plan/Trends), 
 
 ## Test coverage reality
 
-Component tests cover the Plan/generation flow, Today/debrief behavior, Standing Guidance, and Profile (11 files). Settings/Knowledge components have none — but their underlying `lib/` logic is thoroughly unit-tested. Component tests use per-file `/** @vitest-environment jsdom */` docblocks (infra added 2026-07-23).
+Component tests cover Plan/generation, Today/debrief, Standing Guidance, and Profile behavior.
+Settings coverage includes restore confirmation, success/reload and failure handling in
+[BackupRestore tests](../../components/BackupRestore.test.tsx), plus local-storage/remote-processing
+copy in [DataPrivacyCard tests](../../components/DataPrivacyCard.test.tsx). `BlockSettingsForm`,
+`PlatformBehaviorForm`, `AiUsageCard`, and `KnowledgeBaseEditor` have no dedicated component tests;
+underlying route/engine tests do not establish interactive UI coverage. Find the current suite with
+`rg --files components -g '*.test.tsx'`. Browser component tests use per-file
+`/** @vitest-environment jsdom */` docblocks.
 
 ## Known rough edges
 
-- **Big files (split candidates, in order):** `dashboard/today.tsx` (917 — `TodayRideCard` alone ~406),
-  `AthleteProfileForm.tsx` (712, five distinct sections), `dashboard/plan.tsx` (604). Precedent for
+- **Split candidates, in order:** `dashboard/today.tsx` (especially `TodayRideCard`),
+  `AthleteProfileForm.tsx`, `dashboard/plan.tsx`. Precedent for
   extraction: `SeasonSection` was already split out of the profile form; Phase 2c split
   `RideIntentBlock` out into `dashboard/ride-intent.tsx` rather than growing `TodayRideCard` further —
   follow that precedent for the next addition too, rather than reversing it.

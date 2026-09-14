@@ -14,7 +14,11 @@ Owner module: `lib/kb-loader.ts`. Goals/weakpoints migrated out of markdown into
 
 `KB_ORDER` controls editor/list ordering and per-file fallback: `cycling_database.md`, `training_knowledge.md`, `nutrition_knowledge.md`, `athlete_profile.md` (+ `bikefit_knowledge.md` if present). Legacy syntax helpers remain available for stored content, but there is no all-files prompt/context loader.
 
-`athlete_profile.md` is also **structurally parsed** (`parseAthleteMd`) to keep `athlete.json` performance numbers in sync — but live *zones* come from the physiology store (synced from Intervals.icu), not the markdown.
+`readAthleteProfile` uses `parseAthleteMd` through `readMdPerformance` to overlay fallback FTP,
+threshold HR, and max HR in memory. Valid physiology-store values take precedence; live zones come
+from that store. These overlays do not update the stored performance fields in `athlete.json`.
+The separate one-time goals/weakpoints migration can persist profile changes when its migration
+flag is absent; it does not persist the performance overlay.
 
 ## Block retrospectives (the durable corpus)
 

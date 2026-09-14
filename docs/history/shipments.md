@@ -13,6 +13,19 @@ exact commits.
 ---
 
 
+## DS-1 through DS-6 · Documentation corrections (2026-09-14)
+
+Resolved the documentation findings from the [September 14 audit](../reviews/2026-09-14-repository-staleness-audit.md)
+against source and tests. FEATURES now describes publication's single-process boundary. The data
+system and file index point to the source-owned backup coverage list, and the sync contract admits
+local migration/envelope writes on GET. Frontend coverage reflects the Settings tests, incidental
+file/importer/line counts are removed, and the Knowledge doc distinguishes read-time performance
+overlays from persisted goals migration. Existing headings and code pointers remain intact.
+
+DS-7 code retirement is outside this pass. No runtime behavior changes. Documentation links and
+source/test comparisons provide focused verification; the task PR records the required integration
+checks and merge result.
+
 ## HR-69 · Retire the obsolete session handoff (2026-09-14)
 
 At the owner's request, replaced `CONTINUE.md`'s obsolete P4/“second brain” priorities and cached
