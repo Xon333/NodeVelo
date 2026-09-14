@@ -4,6 +4,8 @@
 
 This report consolidates the original owner inputs, local implementation, and historical verification, then compares them with refreshed GitHub source. It is evidence for future decisions, not a change to the [roadmap](https://github.com/Xon333/NodeVelo/blob/cbdc2edf157beb88e0a3ba70decc0db4b0647c89/ROADMAP.md) or authorization to implement the recommendations.
 
+**Owner clarification — 2026-09-14:** Preserve this report as a reference for subsequent work targeting GitHub `main`, through the repository's normal task-branch workflow. The local demo worktree supplied evidence for this consolidation and comparison; it is not intended to be updated or synchronized with the repository. Follow-up findings should inform work on the main codebase, without backtracking to update the demo. References below to remaining demo work describe historical scope, not a current maintenance obligation.
+
 ## 1. Scope, evidence, and how to follow references
 
 | Source | Examined scope |
@@ -182,4 +184,3 @@ The [current roadmap](https://github.com/Xon333/NodeVelo/blob/cbdc2edf157beb88e0
 | Hosted adaptation plan | [Hosted-demo plan](</Users/otis/Cycling App/.worktrees/codex-demo-instance-plan/docs/superpowers/plans/2026-09-10-hosted-demo.md>) |
 
 Treat these as layered history. The README's connection strip and two 30-minute Z2 example are superseded by later refinement; parts of the handoff still name earlier application/deployment revisions and omit the added climb. The handoff's original “screenshots not yet selected” paragraph is superseded by the approved reference-page section and manifest. HOSTED's statement about real scores needs the manifest's later provisional-display exception. This report resolves those contradictions for its snapshot without rewriting the preserved demo records.
-
