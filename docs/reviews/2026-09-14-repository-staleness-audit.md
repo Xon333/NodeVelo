@@ -24,7 +24,7 @@ audit, not an exhaustive dead-code analysis, security review, or live athlete-da
 | DS-4 | [Frontend test coverage](../systems/08-frontend.md#test-coverage-reality) says Settings components have no tests. [BackupRestore tests](../../components/BackupRestore.test.tsx) and [DataPrivacyCard tests](../../components/DataPrivacyCard.test.tsx) exist for Settings components. Its cached test count and rough-edge line counts are also stale. | Describe covered behaviors without fixed file/line counts; retain any genuinely untested component limits after checking current tests. |
 | DS-5 | [File index](../FILE_INDEX.md#appapi--routes) carries a stale approximate sync-route length; its stats row also carries an importer count. These duplicate facts derivable from source and conflict with the repo's guidance against cached counts. | Remove incidental counts and retain responsibility/caller pointers. Do not replace them with newer counts that will drift again. |
 | DS-6 | [Knowledge doc](../systems/04-knowledge.md#the-two-directories) says `parseAthleteMd` keeps `athlete.json` performance numbers in sync. [readAthleteProfile](../../lib/data-store.ts) overlays Markdown fallback FTP/HR in memory, then gives physiology precedence; the write accessor explicitly preserves raw stored profile fields. | Describe read-time fallback/overlay separately from persisted profile updates and the one-time goals migration. |
-| DS-7 | [overview-check.ts](../../lib/overview-check.ts) exports `extractBlockFacts` and `checkOverviewAgainstFacts`; searches of `app`, `lib`, `components` and `scripts` find their consumers only in [its own tests](../../lib/overview-check.test.ts). The [file index](../FILE_INDEX.md) already labels the helper historical. | Candidate for a separate retirement change: verify all consumers again, remove implementation/tests if no retained need exists, update current index references, and preserve historical decisions. This task does not delete it. |
+| DS-7 | [overview-check.ts](https://github.com/Xon333/NodeVelo/blob/899a2cb5c2c855f729f4e2b05aa8e6c6328710f4/lib/overview-check.ts) exports `extractBlockFacts` and `checkOverviewAgainstFacts`; searches of `app`, `lib`, `components` and `scripts` find their consumers only in [its own tests](https://github.com/Xon333/NodeVelo/blob/899a2cb5c2c855f729f4e2b05aa8e6c6328710f4/lib/overview-check.test.ts). The [file index](https://github.com/Xon333/NodeVelo/blob/899a2cb5c2c855f729f4e2b05aa8e6c6328710f4/docs/FILE_INDEX.md) already labels the helper historical. | Candidate for a separate retirement change: verify all consumers again, remove implementation/tests if no retained need exists, update current index references, and preserve historical decisions. This task does not delete it. |
 
 ## Retained deliberately
 
@@ -57,3 +57,12 @@ DS-1 through DS-6 are resolved by the documentation-only correction: see
 [shipment evidence](../history/shipments.md#ds-1-through-ds-6--documentation-corrections-2026-09-14).
 The original findings above describe the audited revision and remain intact. DS-7 remains open
 for the separate dependency check and retirement decision; this pass changes no application code.
+
+## DS-7 disposition — 2026-09-14
+
+DS-7 is resolved by retiring the checker and its dedicated tests. A fresh repository search found
+no other code consumers; FR-5 removed the generation integration in PR #107. The current compiler
+constructs the overview directly from typed inputs and retains its existing overview regression
+and publication checks. Historical source/test links above are pinned to the pre-retirement
+revision. The original findings and immutable plans remain evidence of their recorded revisions.
+See [shipment evidence](../history/shipments.md#ds-7--retire-the-unused-overview-checker-2026-09-14).

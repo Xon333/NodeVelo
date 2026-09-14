@@ -13,6 +13,19 @@ exact commits.
 ---
 
 
+## DS-7 · Retire the unused overview checker (2026-09-14)
+
+Removed `lib/overview-check.ts` and its dedicated tests after rechecking all tracked references.
+Its only code consumer was its test file; FR-5 had removed the generation caller in PR #107.
+The current compiler constructs its overview from block length, focus, and phase, with an existing
+regression assertion. No runtime call path or publication validation changed.
+
+Removed the current file-index row, appended an ADR-0004 retirement amendment, and closed DS-7 in
+the [audit](../reviews/2026-09-14-repository-staleness-audit.md#ds-7-disposition--2026-09-14).
+Historical source/test links now target the preserved revision; immutable plans remain unchanged.
+The task PR records typecheck, lint, application/workflow/sync tests, and documentation-link checks
+from the sanctioned integration workflow.
+
 ## DS-1 through DS-6 · Documentation corrections (2026-09-14)
 
 Resolved the documentation findings from the [September 14 audit](../reviews/2026-09-14-repository-staleness-audit.md)
