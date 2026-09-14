@@ -6,7 +6,10 @@ Per-file inventory: [../FILE_INDEX.md](../FILE_INDEX.md#data-files).
 
 ## The read/write contract
 
-`GET /api/sync` is **pure** — it returns cached app state and never hits Intervals.icu. `POST /api/sync` is the **only** path that fetches from Intervals.icu, reconciles, re-derives, and persists. Page loads stay instant; every network call is explicit and athlete-triggered (or gated by `autoSyncOnOpen`).
+`GET /api/sync` builds app state from local stores without fetching from Intervals.icu. Reads can
+persist the one-time profile goals migration and resolve/persist the no-block weekly envelope.
+`POST /api/sync` runs the remote full sync, reconciles incoming data, re-derives state, and persists
+results. The client requests it explicitly or through `autoSyncOnOpen`.
 
 **The window:** a full sync pulls **182 days** of activities/wellness — deliberate depth (CTL has a 42-day time constant; baselines are 90-day; the learning loop wants several blocks of history) and cheap (a wider window is a longer JSON list, not more requests — per-activity stream fetches happen only for *today's* ride). Generation consumes resolved recent-state signals rather than sending this raw history to a model.
 
@@ -15,7 +18,7 @@ Per-file inventory: [../FILE_INDEX.md](../FILE_INDEX.md#data-files).
 Four mechanisms, all load-bearing (hardened by ~25 hostile-review fixes, HR-31..59):
 
 1. **Atomic write**: serialize → `<file>.tmp` → fsync → `rename()` (POSIX atomic). A crash can never produce truncated JSON. `updateJsonFile` skips the write entirely when `mutate` hands back the exact same reference it was given (a CAS no-op, or a `wrote: false` resolver path) — nothing changed, nothing to persist.
-2. **`.bak` rotation** — only for the `CRITICAL` set (score-log, intervention-log, physiology, physiology-status, current-block, block-history, athlete, block-settings, dispositions): current live content is copied to `.bak` before each write, *skipped if the live file doesn't parse* (a good `.bak` is never clobbered by corruption). Derived stores (baselines, calibration, quirks, ai-usage) get atomic writes but no `.bak` — they're re-derived on the next sync.
+2. **`.bak` rotation** — coverage is defined by `CRITICAL_JSON_FILES` in [lib/json-store.ts](../../lib/json-store.ts). Current live content is copied to `.bak` before each write, *skipped if the live file doesn't parse* (a good `.bak` is never clobbered by corruption). Stores outside that set still receive atomic writes. Derivation alone does not determine backup coverage: calibration, for example, also carries athlete overrides and is protected.
 3. **Recovery on read** (`readJsonFileWithStatus`): live → `.bak` → caller default, distinguishing "never written" (ENOENT) from corruption (`corruptFallback`) — self-healing callers refuse to persist a fallback born from double-corruption.
 4. **Per-file locking** (`withFileLock`): a promise chain serializes same-file operations; `updateJsonFile` reads *inside* the lock → genuinely transactional read-modify-write. This is what closes the sync-vs-disposition lost-update races.
 
@@ -108,6 +111,6 @@ The version token is `CurrentBlock.createdAt` itself, not a dedicated version/et
 
 | Change | Where |
 |---|---|
-| New persisted store | `lib/data-store.ts` + `json-store.ts` — decide CRITICAL (`.bak`) or derived |
+| New persisted store | `lib/data-store.ts` + `json-store.ts` — decide whether it belongs in `CRITICAL_JSON_FILES` (`.bak`) |
 | New sync pipeline stage | `app/api/sync/route.ts`; extract pure logic into `lib/` for testability |
 | Calendar behavior | `lib/calendar-mirror.ts` |

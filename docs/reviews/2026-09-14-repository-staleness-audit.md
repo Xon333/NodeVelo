@@ -50,3 +50,10 @@ The baseline and post-edit Markdown checks passed. The handoff skill target also
 The sanctioned finish helper runs the required integration suite; its result is recorded in the PR.
 No application behavior, personal runtime data, historical plans, or live calendar state is changed.
 Future repairs should update each fact's canonical owner; this report remains dated evidence.
+
+## Pass 1 disposition — 2026-09-14
+
+DS-1 through DS-6 are resolved by the documentation-only correction: see
+[shipment evidence](../history/shipments.md#ds-1-through-ds-6--documentation-corrections-2026-09-14).
+The original findings above describe the audited revision and remain intact. DS-7 remains open
+for the separate dependency check and retirement decision; this pass changes no application code.

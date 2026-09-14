@@ -17,7 +17,7 @@ One line per file that matters. The authoritative per-file table — README keep
 | `log.ts` | One-line JSON `logError`/`logWarn` |
 | `client-api.ts` | Client fetch wrapper `api<T>()` + `timeAgo`/`isStale`/`nextMonday` |
 | `text.ts` | Small text helpers |
-| `stats.ts` | `round1/round2/clamp/median/toleranceBand` — the universal leaf (13+ engine importers) |
+| `stats.ts` | `round1/round2/clamp/median/toleranceBand` — shared math helpers |
 
 ### Sync & integration
 
@@ -121,7 +121,7 @@ One line per file that matters. The authoritative per-file table — README keep
 
 | Route | Methods | Purpose | LLM |
 |---|---|---|---|
-| `sync` | GET/POST/DELETE | The sync orchestrator; DELETE removes the current block (the largest route, ~905 lines) | config-check only |
+| `sync` | GET/POST/DELETE | The sync orchestrator; DELETE removes the current block | config-check only |
 | `analyze` | POST | Deferred coach-note generation for today's ride | ✅ sonnet |
 | `intent` | POST | Deferred self-directed intent parsing and deterministic overlay scoring | — |
 | `generate` | POST | Deterministic block compilation (proposal only) + persisted publication verdict | — |
@@ -146,30 +146,34 @@ One line per file that matters. The authoritative per-file table — README keep
 
 ## `data/` files
 
-| File | Owner | `.bak`? | Shape (one line) |
-|---|---|---|---|
-| `athlete.json` | data-store | ✅ | Profile: performance (physiology-overlaid at read), goals, weakpoints, nutrition config |
-| `physiology.json` | physiology | ✅ | Effective-dated FTP/zone/LTHR history |
-| `physiology-status.json` | physiology-freshness | ✅ | Sync attempts, last confirmation, and the obsolete marker |
-| `last-sync.json` | intervals-api | — | Full Intervals.icu snapshot (regenerable) |
-| `current-block.json` | data-store | ✅ | Active block + per-day prescription/eventId/execution |
-| `block-history.json` | data-store | ✅ | Archived blocks + retrospectives + reflections (cap 200) |
-| `block-settings.json` | data-store | ✅ | Generation knobs + calibration overrides (may not exist → defaults) |
-| `score-log.json` | score-log | ✅ | THE append-only ledger (cap 400) |
-| `intent-overlays.json` | data-store | ✅ | Permanent intent interpretations; only active coherent records affect derived state |
-| `ledger-rebuild.json` | data-store | — | One-shot rebuild guard `{rebuiltAt}` |
-| `dispositions.json` | disposition | ✅ | Per-date session self-reports |
-| `intervention-log.json` | intervention | ✅ | Directive baselines + matured outcomes |
-| `morning-check.json` | morning-check | — | Per-date flags + decisions |
-| `loading-log.json` | loading | — | Carb-loading prompts/attributions (may not exist) |
-| `season-plan.json` | season | — | Objective, events, periods |
-| `generation-gate.json` | publication-gate (via data-store) | — | Persisted verdict for the LATEST generation only: verdictHash + blockers/preferences; `/api/write`'s publish passport |
-| `today-analysis.json` | ride-analysis | — | Today's analysis + coach note |
-| `rolling-baselines.json` | readiness | — | 90-day derived baselines |
-| `calibration.json` | calibration | — | Derived + overridden parameters |
-| `athlete-quirks.json` | quirks | — | Mined quirks (fully regenerated each sync) |
-| `ai-usage.json` | ai-usage | — | Token/cost telemetry |
-| `weekly-envelope.json` | data-store | — | No-block Today: current week's resolved TSS range + tolerance history |
+Backup coverage is defined by `CRITICAL_JSON_FILES` in [lib/json-store.ts](../lib/json-store.ts);
+[the persistence contract](systems/01-sync-and-data.md#the-persistence-substrate-libjson-storets)
+explains rotation and recovery.
+
+| File | Owner | Shape (one line) |
+|---|---|---|
+| `athlete.json` | data-store | Profile: performance (physiology-overlaid at read), goals, weakpoints, nutrition config |
+| `physiology.json` | physiology | Effective-dated FTP/zone/LTHR history |
+| `physiology-status.json` | physiology-freshness | Sync attempts, last confirmation, and the obsolete marker |
+| `last-sync.json` | intervals-api | Full Intervals.icu snapshot (regenerable) |
+| `current-block.json` | data-store | Active block + per-day prescription/eventId/execution |
+| `block-history.json` | data-store | Archived blocks + retrospectives + reflections (cap 200) |
+| `block-settings.json` | data-store | Generation knobs + calibration overrides (may not exist → defaults) |
+| `score-log.json` | score-log | THE append-only ledger (cap 400) |
+| `intent-overlays.json` | data-store | Permanent intent interpretations; only active coherent records affect derived state |
+| `ledger-rebuild.json` | data-store | One-shot rebuild guard `{rebuiltAt}` |
+| `dispositions.json` | disposition | Per-date session self-reports |
+| `intervention-log.json` | intervention | Directive baselines + matured outcomes |
+| `morning-check.json` | morning-check | Per-date flags + decisions |
+| `loading-log.json` | loading | Carb-loading prompts/attributions (may not exist) |
+| `season-plan.json` | season | Objective, events, periods |
+| `generation-gate.json` | publication-gate (via data-store) | Persisted verdict for the LATEST generation only: verdictHash + blockers/preferences; `/api/write`'s publish passport |
+| `today-analysis.json` | ride-analysis | Today's analysis + coach note |
+| `rolling-baselines.json` | readiness | 90-day derived baselines |
+| `calibration.json` | calibration | Derived + overridden parameters |
+| `athlete-quirks.json` | quirks | Mined quirks (fully regenerated each sync) |
+| `ai-usage.json` | ai-usage | Token/cost telemetry |
+| `weekly-envelope.json` | data-store | No-block Today: current week's resolved TSS range + tolerance history |
 
 ## `components/` — see [systems/08-frontend.md](systems/08-frontend.md) for the ownership map
 
