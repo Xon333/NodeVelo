@@ -13,6 +13,18 @@ exact commits.
 ---
 
 
+## HR-69 · Retire the obsolete session handoff (2026-09-14)
+
+At the owner's request, replaced `CONTINUE.md`'s obsolete P4/“second brain” priorities and cached
+check results with canonical ROADMAP, Compass, Workflow, and shipment-history pointers. The path
+remains available for compatibility and an explicitly requested future handoff; it carries no
+independent work queue. Removed HR-69 from the live punch-list. The original handoff remains in
+Git history at [pre-cleanup revision `a2de75e`](https://github.com/Xon333/NodeVelo/blob/a2de75e326b43cab0f9c1076b08ac2f416b6fab1/CONTINUE.md).
+
+The accompanying [staleness audit](../reviews/2026-09-14-repository-staleness-audit.md) records
+additional findings as review evidence, not shipped repairs or an expanded implementation queue.
+Verification and integration are recorded by this task's commit/PR through the standard workflow.
+
 ## Dependency security maintenance (2026-09-12)
 
 Under the owner's follow-up autonomous-maintenance scope, updated Next.js and its ESLint config
