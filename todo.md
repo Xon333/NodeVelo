@@ -28,14 +28,6 @@ ride-finalization and UI refactors remain proposals; the smallest verified fixes
 [maintainer audit](docs/reviews/2026-09-05-maintainer-audit.md). MA-1 shipped in PR #110. MA-6/7 resolved: primary edits were backed up and reconciled,
 immutable plans restored, and source-comment rationale retained.
 
-
-**Whole-repo hostile review (2026-08-15) — remaining decisions.** Closed findings HR-60…HR-65,
-HR-67, HR-68, HR-70…HR-72 are recorded in [ARCHIVE.md](ARCHIVE.md).
-
-- ☐ P3 `edu` **HR-69** `CONTINUE.md` is stale — still says "after P4 COMPLETE… Next: the 'second
-  brain' spec work" while the repo is well past that (adaptive-coach P3c, NV-1…14 closed).
-  Follow ROADMAP for current work; refresh this only through the handoff workflow.
-
 ---
 
 **Post-2026-07-22-audit: shipped but not exercised live yet.** Not bugs — just never run against real
