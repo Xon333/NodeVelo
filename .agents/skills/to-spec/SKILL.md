@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 This skill takes the current conversation context and codebase understanding and produces a spec. Do NOT interview the user; just synthesize what you already know.
 
-The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
+Use the existing [issue-tracker configuration](../../../docs/agents/issue-tracker.md) and [triage-label mapping](../../../docs/agents/triage-labels.md). Ask only about a material missing value; do not rerun project setup.
 
 ## Process
 

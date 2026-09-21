@@ -13,6 +13,18 @@ exact commits.
 ---
 
 
+## Skill cleanup (2026-09-21)
+
+At the owner's request, removed redundant routing, implementation, research, re-explanation and
+retired Claude-handoff skills, the conflicting merge recipe, exercise scaffolding, and the
+pre-commit, deep-module, Shoehorn and engineering-skill setup recipes. Updated `skills-lock.json`
+and routed retained research/tracker workflows directly to primary sources and `docs/agents/`.
+
+Both `grill-me` and `grill-with-docs` remain, together with their `grilling` and `domain-modeling`
+dependencies. Writing and teaching workflows remain available pending the owner's scope decision.
+Existing Git hooks, application dependencies and runtime behavior are unchanged. The task PR
+records required checks and integration status.
+
 ## DS-7 · Retire the unused overview checker (2026-09-14)
 
 Removed `lib/overview-check.ts` and its dedicated tests after rechecking all tracked references.
