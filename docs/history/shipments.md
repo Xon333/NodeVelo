@@ -21,7 +21,8 @@ pre-commit, deep-module, Shoehorn and engineering-skill setup recipes. Updated `
 and routed retained research/tracker workflows directly to primary sources and `docs/agents/`.
 
 Both `grill-me` and `grill-with-docs` remain, together with their `grilling` and `domain-modeling`
-dependencies. Writing and teaching workflows remain available pending the owner's scope decision.
+dependencies. A follow-up owner decision removed `teach`, `writing-fragments`, `writing-shape` and
+`writing-beats`; `loop-me` remains. Their lockfile entries were removed with the skills.
 Existing Git hooks, application dependencies and runtime behavior are unchanged. The task PR
 records required checks and integration status.
 
