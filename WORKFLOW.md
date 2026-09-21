@@ -49,7 +49,7 @@ by its owner. Never blanket-stash/reset to make sync pass. Old worktrees are not
 |---|---|
 | Dirty task | Review and commit task-owned files |
 | Failed checks | Fix task regressions; identify unrelated baseline failures |
-| Conflict | Reconcile both changes using the merge-conflict workflow |
+| Conflict | Inspect both changes and preserve their intended behavior; resolve routine conflicts, and ask when their requirements are incompatible. Stage only task-owned files and run affected checks |
 | Pending GitHub checks | Wait or inspect the failing run |
 | Expired authentication | Complete GitHub login, then retry |
 | Merge succeeded, local cleanup failed | Confirm remote merge; preserve dirty primary and clean up separately |
